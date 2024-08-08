@@ -1,27 +1,34 @@
-﻿using MarketPlaceSellerApp.ViewModel;
-using MarketPlaceSellerApp.Models;
+﻿using MarketPlaceSellerApp.Models;
+using MarketPlaceSellerApp.ViewModel;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MarketPlaceSellerApp.Controllers
 {
-    public class DataSendAppController : Controller
+	[ApiController]
+	[Route("[controller]")]
+	public class DataSendAppController : Controller
     {
-         
+		private readonly HepsiburadaSellerInformationContext _context;
 
-        public ActionResult MarketPlaceData(int? page, int? pageSize)
+		public DataSendAppController(HepsiburadaSellerInformationContext context)
+		{
+			_context = context;
+		}
+        [HttpGet("MarketPlaceData")]
+		public ActionResult MarketPlaceData(int? page, int? pageSize)
         {
             try
             {
-                int totalCount = db.Seller_Information.Count();
+                int totalCount = _context.SellerInformations.Count();
                 int currentPage = page ?? 1;
                 pageSize = pageSize ?? 50;
                 int totalPage = (int)Math.Ceiling((decimal)totalCount / pageSize.GetValueOrDefault());
 
-                var data = (from c in db.Seller_Information
-                            orderby c.ID
+                var data = (from c in _context.SellerInformations
+                            orderby c.Id
                             select new HbInformationAppDataViewModel
                             {
-                                Id = c.ID,
+                                Id = c.Id,
                                 StoreName = c.StoreName,
                                 Telephone = c.Telephone,
                                 Email = c.Email,

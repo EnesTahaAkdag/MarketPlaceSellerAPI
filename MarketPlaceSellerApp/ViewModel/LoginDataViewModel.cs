@@ -1,12 +1,9 @@
-﻿using Hepsiburada_Seller_Information.Helpers;
-using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
+﻿using MarketPlaceSellerApp.Helpers;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Web;
+using System.Text.Json.Serialization;
 
-namespace Hepsiburada_Seller_Information.ViewModel
+
+namespace MarketPlaceSellerApp.ViewModel
 {
 	public class LoginDataViewModel
 	{
@@ -52,7 +49,6 @@ namespace Hepsiburada_Seller_Information.ViewModel
 		public string FirstName { get; set; }
 		public string LastName { get; set; }
 		public string UserName { get; set; }
-		[JsonConverter(typeof(DateFormatConverter), "yyyy-MM-dd")]
 		public DateTime? Age { get; set; }
 	}
 

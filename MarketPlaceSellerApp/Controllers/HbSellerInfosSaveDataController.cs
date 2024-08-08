@@ -1,20 +1,24 @@
-﻿using Hepsiburada_Seller_Information.Models;
-using Hepsiburada_Seller_Information.ViewModel;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
-using System.Web.Mvc;
+﻿using MarketPlaceSellerApp.Models;
+using MarketPlaceSellerApp.ViewModel;
+using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 
-namespace Hepsiburada_Seller_Information.Controllers
+namespace MarketPlaceSellerApp.Controllers
 {
+	[ApiController]
+	[Route("[controller]")]
 	public class HbSellerInfosSaveDataController : Controller
 	{
-		private HepsiburadaSellerInformationEntities db = new HepsiburadaSellerInformationEntities();
-		[HttpGet]
+		private readonly HepsiburadaSellerInformationContext _context;
+
+		public HbSellerInfosSaveDataController(HepsiburadaSellerInformationContext context)
+		{
+			_context = context;
+		}
+		[HttpGet("GetRandomUrl")]
 		public ActionResult GetRandomUrl()
 		{
-			var randomUrl = db.Seller_Information
+			var randomUrl = _context.SellerInformations
 				.Where(r => r.Category == null || r.Category == "-" || r.Email == null || r.Email == "-")
 				.OrderBy(r => Guid.NewGuid())
 				.Select(r => r.Link)
@@ -22,17 +26,17 @@ namespace Hepsiburada_Seller_Information.Controllers
 
 			if (!string.IsNullOrEmpty(randomUrl))
 			{
-				return Json(new { success = true, url = randomUrl }, JsonRequestBehavior.AllowGet);
+				return Json(new { success = true, url = randomUrl });
 			}
 			else
 			{
-				return Json(new { success = false, message = "Rastgele URL Bulunamadı." }, JsonRequestBehavior.AllowGet);
+				return Json(new { success = false, message = "Rastgele URL Bulunamadı." });
 			}
 		}
-		[HttpPost]
+		[HttpPost("UpdateCategory")]
 		public ActionResult UpdateCategory(SellerInformationViewModel model)
 		{
-			var dataControl = db.Seller_Information.FirstOrDefault(m => m.StoreName == model.StoreName);
+			var dataControl = _context.SellerInformations.FirstOrDefault(m => m.StoreName == model.StoreName);
 			if (dataControl == null)
 			{
 				return Json(new { success = false, message = "Böyle bir mağza Yok." });
@@ -40,14 +44,14 @@ namespace Hepsiburada_Seller_Information.Controllers
 			else
 			{
 				dataControl.Category = model.Category;
-				db.SaveChanges();
+				_context.SaveChanges();
 				return Json(new { success = true, message = "Kategori başarıyla güncellendi", UpdateCategory = dataControl.Category });
 			}
 		}
-		[HttpPost]
+		[HttpPost("UpdateData")]
 		public ActionResult UpdateData(SellerInformationViewModel model)
 		{
-			var dataCheck = db.Seller_Information.FirstOrDefault(m => m.StoreName == model.StoreName);
+			var dataCheck = _context.SellerInformations.FirstOrDefault(m => m.StoreName == model.StoreName);
 			if (dataCheck == null)
 			{ return Json(new { success = false, message = "Böyle bir mağaza yok." }); }
 			else
@@ -61,10 +65,10 @@ namespace Hepsiburada_Seller_Information.Controllers
 				dataCheck.RatingScore = model.RatingScore;
 				dataCheck.NumberOfComments = model.NumberOfComments;
 				dataCheck.NumberOfProducts = model.NumberOfProducts;
-				dataCheck.VKN = model.VKN;
+				dataCheck.Vkn = model.VKN;
 				try
 				{
-					db.SaveChanges();
+					_context.SaveChanges();
 				}
 				catch (Exception)
 				{

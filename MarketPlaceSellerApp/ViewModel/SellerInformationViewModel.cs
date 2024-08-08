@@ -1,11 +1,4 @@
-﻿using Microsoft.SqlServer.Server;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
-using System.Web.Mvc;
-
-namespace Hepsiburada_Seller_Information.ViewModel
+﻿namespace MarketPlaceSellerApp.ViewModel
 {
     public class SellerInformationViewModel
     {

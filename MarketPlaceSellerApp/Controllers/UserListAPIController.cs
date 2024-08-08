@@ -1,25 +1,31 @@
-﻿using Hepsiburada_Seller_Information.Models;
-using System;
-using System.Linq;
-using System.Web.Mvc;
-using Hepsiburada_Seller_Information.ViewModel;
-using System.Data.Entity;
-using System.Threading.Tasks;
+﻿using MarketPlaceSellerApp.Models;
+using MarketPlaceSellerApp.ViewModel;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 
-namespace Hepsiburada_Seller_Information.Controllers
+
+namespace MarketPlaceSellerApp.Controllers
 {
+	[ApiController]
+	[Route("[controller]")]
 	public class UserListAPIController : Controller
 	{
-		private HepsiburadaSellerInformationEntities db = new HepsiburadaSellerInformationEntities();
-		[HttpGet]
-		public async Task<ActionResult> UserList(LoginDataViewModel model)
+		private readonly HepsiburadaSellerInformationContext _context;
+
+		public UserListAPIController(HepsiburadaSellerInformationContext context)
+		{
+			_context = context;
+		}
+
+		[HttpGet("UserList")]
+		public async Task<ActionResult> UserList()
 		{
 			try
 			{
-				int count = db.UserData.Count();
-				int totalCount = await db.UserData.CountAsync();
-				var data = await (from c in db.UserData
+				int count = _context.UserData.Count();
+				int totalCount = await _context.UserData.CountAsync();
+				var data = await (from c in _context.UserData
 								  orderby c.Id
 								  select new UserListViewModel
 								  {
@@ -50,7 +56,7 @@ namespace Hepsiburada_Seller_Information.Controllers
 					Success = false,
 					ErrorMessage = ex.Message,
 				};
-				return Json (response, JsonRequestBehavior.AllowGet);
+				return Json (response );
 			}
 		}
 	}

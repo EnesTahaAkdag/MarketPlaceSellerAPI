@@ -1,16 +1,24 @@
-﻿using MarketPlaceSellerApp.ViewModel;
+﻿using MarketPlaceSellerApp.Models;
+using MarketPlaceSellerApp.ViewModel;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 
 namespace MarketPlaceSellerApp.Controllers
 {
+	[ApiController]
+	[Route("[controller]")]
 	public class RegisterAPIController : Controller
 	{
-		private readonly HepsiburadaSellerInformationEntities db = new HepsiburadaSellerInformationEntities;
+		private readonly HepsiburadaSellerInformationContext _context;
+
+		public RegisterAPIController(HepsiburadaSellerInformationContext context)
+		{
+			_context = context;
+		}
 
 
-
-		[HttpPost]
-		public JsonResult RegisterUser([FromBody]RegisterDataViewModel model)
+		[HttpPost("RegisterUser")]
+		public JsonResult RegisterUser([FromBody] RegisterDataViewModel model)
 		{
 			if (!ModelState.IsValid)
 			{
@@ -32,8 +40,8 @@ namespace MarketPlaceSellerApp.Controllers
 					Password = model.Password
 				};
 
-				db.UserData.Add(user);
-				db.SaveChanges();
+				//_context.UserData.Add(user);
+				_context.SaveChanges();
 
 				return Json(new { Success = true });
 			}

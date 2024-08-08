@@ -1,4 +1,5 @@
 using MarketPlaceSellerApp.Models;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,7 +10,10 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddScoped<HepsiburadaSellerInformationContext, HepsiburadaSellerInformationContext>();
+builder.Services.AddDbContext<HepsiburadaSellerInformationContext>(context =>
+{
+	context.UseSqlServer(@"Data Source=DESKTOP-PJ1E5QV;Initial Catalog=Hepsiburada-Seller-Information;Persist Security Info=True;Trusted_Connection=True;TrustServerCertificate=Yes;");
+});
 
 var app = builder.Build();
 

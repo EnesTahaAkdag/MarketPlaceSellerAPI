@@ -1,14 +1,24 @@
-﻿using Hepsiburada_Seller_Information.ViewModel;
-namespace Hepsiburada_Seller_Information.Controllers
+﻿using MarketPlaceSellerApp.Models;
+using MarketPlaceSellerApp.ViewModel;
+using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
+namespace MarketPlaceSellerApp.Controllers
 {
-    public class LoginPageController : Controller
-    {
-        private HepsiburadaSellerInformationEntities db =new HepsiburadaSellerInformationEntities();
+	[ApiController]
+	[Route("[controller]")]
+	public class LoginPageController : Controller
+	{
+		private readonly HepsiburadaSellerInformationContext _context;
 
-        public ActionResult Index(LoginDataViewModel model)
-        {
+		public LoginPageController(HepsiburadaSellerInformationContext context)
+		{
+			_context = context;
+		}
+		[HttpGet("LoginUserData")]
+		public ActionResult LoginUserData(LoginDataViewModel model)
+		{
 
-            return View();
-        }
-    }
+			return View();
+		}
+	}
 }

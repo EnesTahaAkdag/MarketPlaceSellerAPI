@@ -16,8 +16,9 @@ public partial class HepsiburadaSellerInformationContext : DbContext
     public virtual DbSet<SellerInformation> SellerInformations { get; set; }
 
     public virtual DbSet<UserDatum> UserData { get; set; }
+	//public virtual DbSet<SellerInformation> Seller_Information { get; set; }
 
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
+	protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<SellerInformation>(entity =>
         {

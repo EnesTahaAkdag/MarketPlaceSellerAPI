@@ -1,28 +1,29 @@
-﻿using Hepsiburada_Seller_Information.Models;
-using Hepsiburada_Seller_Information.ViewModel;
-using System;
-using System.Data.Entity;
-using System.Data.SqlClient;
-using System.Linq;
-using System.Threading.Tasks;
-using System.Web.Mvc;
-using Dapper;
-
-namespace Hepsiburada_Seller_Information.Controllers
+﻿using MarketPlaceSellerApp.Models;
+using MarketPlaceSellerApp.ViewModel;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
+namespace MarketPlaceSellerApp.Controllers
 {
+	[ApiController]
+		[Route("[controller]")]
 	public class SendDataToChartController : Controller
-	{
-		private readonly HepsiburadaSellerInformationEntities db = new HepsiburadaSellerInformationEntities();
+	{	
+		private readonly HepsiburadaSellerInformationContext _context;
 
-		[HttpGet]
+		public SendDataToChartController(HepsiburadaSellerInformationContext context)
+		{
+			_context = context;
+		}
+		[HttpGet("ChartData")]
 		public async Task<ActionResult> ChartData()
 		{
 			try
 			{
-				int count = db.Seller_Information.Count();
-				int totalCount = await db.Seller_Information.CountAsync();
-				var data = await (from c in db.Seller_Information
-								  orderby c.ID
+				int count = _context.SellerInformations.Count();
+				int totalCount = await _context.SellerInformations.CountAsync();
+				var data = await (from c in _context.SellerInformations
+								  orderby c.Id
 								  select new SellerRaitingChartViewModel
 								  {
 									  StoreName = c.StoreName,
@@ -39,9 +40,7 @@ namespace Hepsiburada_Seller_Information.Controllers
 					Count = count,
 					TotalCount = totalCount
 				};
-				var jsonResult = Json(response, JsonRequestBehavior.AllowGet);
-				jsonResult.MaxJsonLength = int.MaxValue;
-				return jsonResult;
+				return Json(response);
 			}
 			catch (Exception ex)
 			{
@@ -51,7 +50,7 @@ namespace Hepsiburada_Seller_Information.Controllers
 					ErrorMessage = ex.Message
 				};
 
-				return Json(response, JsonRequestBehavior.AllowGet);
+				return Json(response);
 			}
 		}
 	}
