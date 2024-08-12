@@ -19,5 +19,5 @@ public partial class UserDatum
 
     public DateTime? Age { get; set; }
 
-    public int? Password { get; set; }
+    public string Password { get; set; }
 }

@@ -15,7 +15,7 @@ namespace MarketPlaceSellerApp.Controllers
 		{
 			_context = context;
 		}
-		[HttpGet("GetRandomUrl")]
+		[HttpPost("GetRandomUrl")]
         public JsonResult GetRandomUrl()
         {
             var randomUrl = _context.SellerInformations

@@ -16,9 +16,8 @@ public partial class HepsiburadaSellerInformationContext : DbContext
     public virtual DbSet<SellerInformation> SellerInformations { get; set; }
 
     public virtual DbSet<UserDatum> UserData { get; set; }
-	//public virtual DbSet<SellerInformation> Seller_Information { get; set; }
 
-	protected override void OnModelCreating(ModelBuilder modelBuilder)
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<SellerInformation>(entity =>
         {
@@ -68,6 +67,7 @@ public partial class HepsiburadaSellerInformationContext : DbContext
             entity.Property(e => e.Age).HasColumnType("datetime");
             entity.Property(e => e.FirstName).HasMaxLength(50);
             entity.Property(e => e.LastName).HasMaxLength(50);
+            entity.Property(e => e.Password).HasMaxLength(50);
             entity.Property(e => e.UserName).HasMaxLength(50);
         });
 

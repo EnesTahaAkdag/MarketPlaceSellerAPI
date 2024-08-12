@@ -1,7 +1,7 @@
 ﻿using MarketPlaceSellerApp.Models;
 using MarketPlaceSellerApp.ViewModel;
 using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
+using Microsoft.EntityFrameworkCore;
 
 namespace MarketPlaceSellerApp.Controllers
 {
@@ -16,7 +16,6 @@ namespace MarketPlaceSellerApp.Controllers
 			_context = context;
 		}
 
-
 		[HttpPost("RegisterUser")]
 		public JsonResult RegisterUser([FromBody] RegisterDataViewModel model)
 		{
@@ -30,20 +29,28 @@ namespace MarketPlaceSellerApp.Controllers
 
 			try
 			{
-				var user = new RegisterDataViewModel
+				var dataControl = _context.UserData.FirstOrDefault(m => m.UserName == model.UserName);
+				if (dataControl == null)
 				{
-					FirstName = model.FirstName,
-					LastName = model.LastName,
-					UserName = model.UserName,
-					Email = model.Email,
-					Age = model.Age,
-					Password = model.Password
-				};
+					var user = new UserDatum
+					{
+						FirstName = model.FirstName,
+						LastName = model.LastName,
+						UserName = model.UserName,
+						Email = model.Email,
+						Age = model.Age,
+						Password = model.Password
+					};
 
-				//_context.UserData.Add(user);
-				_context.SaveChanges();
+					_context.UserData.Add(user);
+					_context.SaveChanges();
 
-				return Json(new { Success = true });
+					return Json(new { Success = true });
+				}
+				else
+				{
+					return Json(new { Success = false, ErrorMessage = "Kullanıcı adı zaten mevcut." });
+				}
 			}
 			catch (Exception ex)
 			{
