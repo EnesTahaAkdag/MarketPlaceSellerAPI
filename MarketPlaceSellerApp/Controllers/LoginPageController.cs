@@ -15,7 +15,7 @@ namespace MarketPlaceSellerApp.Controllers
 			_context = context;
 		}
 		[HttpGet("LoginUserData")]
-		public ActionResult LoginUserData(LoginDataViewModel model)
+		public ActionResult LoginUserData(LoginUserViewModel model)
 		{
 
 			return View();

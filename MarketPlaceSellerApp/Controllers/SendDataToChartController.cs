@@ -16,7 +16,7 @@ namespace MarketPlaceSellerApp.Controllers
 			_context = context;
 		}
 		[HttpGet("ChartData")]
-		public async Task<ActionResult> ChartData()
+		public async Task<IActionResult> ChartData()
 		{
 			try
 			{

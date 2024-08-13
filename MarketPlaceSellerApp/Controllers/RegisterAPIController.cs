@@ -17,19 +17,11 @@ namespace MarketPlaceSellerApp.Controllers
 		}
 
 		[HttpPost("RegisterUser")]
-		public JsonResult RegisterUser([FromBody] RegisterDataViewModel model)
+		public async Task<IActionResult> RegisterUser([FromBody] User model)
 		{
-			if (!ModelState.IsValid)
-			{
-				var errors = ModelState.Values.SelectMany(v => v.Errors)
-											  .Select(e => e.ErrorMessage)
-											  .ToList();
-				return Json(new { Success = false, ErrorMessage = "Geçersiz veri girdiniz.", Errors = errors });
-			}
-
 			try
 			{
-				var dataControl = _context.UserData.FirstOrDefault(m => m.UserName == model.UserName);
+				var dataControl = await _context.UserData.FirstOrDefaultAsync(m => m.UserName == model.UserName);
 				if (dataControl == null)
 				{
 					var user = new UserDatum
@@ -43,19 +35,20 @@ namespace MarketPlaceSellerApp.Controllers
 					};
 
 					_context.UserData.Add(user);
-					_context.SaveChanges();
+					await _context.SaveChangesAsync();
 
-					return Json(new { Success = true });
+					return Json(new { Success = true , Message="Kullanıcı Başarıyla Kaydedildi"});
 				}
 				else
 				{
-					return Json(new { Success = false, ErrorMessage = "Kullanıcı adı zaten mevcut." });
+					return BadRequest(new { Success = false, ErrorMessage = "Kullanıcı adı zaten mevcut." });
 				}
 			}
 			catch (Exception ex)
 			{
-				return Json(new { Success = false, ErrorMessage = ex.Message });
+				return StatusCode(500, new { Success = false, ErrorMessage = ex.Message });
 			}
 		}
+
 	}
 }

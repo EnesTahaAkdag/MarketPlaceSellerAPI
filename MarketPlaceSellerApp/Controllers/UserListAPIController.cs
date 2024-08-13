@@ -27,7 +27,7 @@ namespace MarketPlaceSellerApp.Controllers
 				int totalCount = await _context.UserData.CountAsync();
 				var data = await (from c in _context.UserData
 								  orderby c.Id
-								  select new UserListViewModel
+								  select new UserList
 								  {
 									  Id = c.Id,
 									  Email = c.Email,
@@ -38,7 +38,7 @@ namespace MarketPlaceSellerApp.Controllers
 								  })
 								  .Take(count)
 								  .ToListAsync();
-				var response = new APIResponse
+				var response = new UserApiResponse
 				{
 					Success = true,
 					ErrorMessage = null,
@@ -51,7 +51,7 @@ namespace MarketPlaceSellerApp.Controllers
 			}
 			catch (Exception ex)
 			{
-				var response = new APIResponse
+				var response = new UserApiResponse
 				{
 					Success = false,
 					ErrorMessage = ex.Message,
