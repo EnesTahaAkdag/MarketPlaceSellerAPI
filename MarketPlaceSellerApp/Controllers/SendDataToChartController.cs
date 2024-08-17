@@ -1,14 +1,15 @@
 ﻿using MarketPlaceSellerApp.Models;
 using MarketPlaceSellerApp.ViewModel;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Newtonsoft.Json;
 namespace MarketPlaceSellerApp.Controllers
 {
+	[Authorize(Policy = "BasicAuthentication")]
 	[ApiController]
-		[Route("[controller]")]
+	[Route("[controller]")]
 	public class SendDataToChartController : Controller
-	{	
+	{
 		private readonly HepsiburadaSellerInformationContext _context;
 
 		public SendDataToChartController(HepsiburadaSellerInformationContext context)

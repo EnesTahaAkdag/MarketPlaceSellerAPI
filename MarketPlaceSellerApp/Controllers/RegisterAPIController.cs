@@ -1,10 +1,13 @@
-﻿using MarketPlaceSellerApp.Models;
+﻿using MarketPlaceSellerApp.HashingPassword;
+using MarketPlaceSellerApp.Models;
 using MarketPlaceSellerApp.ViewModel;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace MarketPlaceSellerApp.Controllers
 {
+	[AllowAnonymous]
 	[ApiController]
 	[Route("[controller]")]
 	public class RegisterAPIController : Controller
@@ -21,9 +24,12 @@ namespace MarketPlaceSellerApp.Controllers
 		{
 			try
 			{
-				var dataControl = await _context.UserData.FirstOrDefaultAsync(m => m.UserName == model.UserName);
+				var dataControl = await _context.UserData
+					.AsNoTracking()
+					.FirstOrDefaultAsync(m => m.UserName == model.UserName);
 				if (dataControl == null)
 				{
+					string hashPassword = HashingAndVerifyPassword.HashingPassword.HashPassword(model.Password);
 					var user = new UserDatum
 					{
 						FirstName = model.FirstName,
@@ -31,9 +37,8 @@ namespace MarketPlaceSellerApp.Controllers
 						UserName = model.UserName,
 						Email = model.Email,
 						Age = model.Age,
-						Password = model.Password
+						Password = hashPassword
 					};
-
 					_context.UserData.Add(user);
 					await _context.SaveChangesAsync();
 

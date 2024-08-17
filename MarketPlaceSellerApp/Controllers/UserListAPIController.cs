@@ -1,5 +1,6 @@
 ﻿using MarketPlaceSellerApp.Models;
 using MarketPlaceSellerApp.ViewModel;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
@@ -7,6 +8,7 @@ using Newtonsoft.Json;
 
 namespace MarketPlaceSellerApp.Controllers
 {
+	[Authorize(Policy = "BasicAuthentication")]
 	[ApiController]
 	[Route("[controller]")]
 	public class UserListAPIController : Controller
@@ -47,7 +49,7 @@ namespace MarketPlaceSellerApp.Controllers
 				};
 				var json = JsonConvert.SerializeObject(response, new JsonSerializerSettings() { DateFormatString = "yyyy-MM-ddThh:mm:ssZ" });
 
-				return Content(json,"application/json");
+				return Content(json, "application/json");
 			}
 			catch (Exception ex)
 			{
@@ -56,7 +58,7 @@ namespace MarketPlaceSellerApp.Controllers
 					Success = false,
 					ErrorMessage = ex.Message,
 				};
-				return Json (response );
+				return Json(response);
 			}
 		}
 	}
