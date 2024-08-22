@@ -37,7 +37,7 @@ namespace MarketPlaceSellerApp.Controllers
 						UserName = model.UserName,
 						Email = model.Email,
 						Age = model.Age,
-						Password = hashPassword
+						Password = hashPassword,
 					};
 					_context.UserData.Add(user);
 					await _context.SaveChangesAsync();

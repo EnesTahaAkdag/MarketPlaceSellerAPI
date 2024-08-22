@@ -8,7 +8,7 @@ using Newtonsoft.Json;
 
 namespace MarketPlaceSellerApp.Controllers
 {
-	[Authorize(Policy = "BasicAuthentication")]
+	[Authorize]
 	[ApiController]
 	[Route("[controller]")]
 	public class UserListAPIController : Controller

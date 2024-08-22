@@ -27,7 +27,8 @@ namespace MarketPlaceSellerApp.ViewModel
 		[RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])[a-zA-Z\d]{8,}$", ErrorMessage = "En az 8 karakterlik bir parola büyük ve küçük harflerin bir kombinasyonunu içermelidir.")]
 		public string Password { get; set; }
 
-		public DateTime? Age { get; set; }
+
+        public DateTime? Age { get; set; }
 	}
 
 
@@ -56,8 +57,15 @@ namespace MarketPlaceSellerApp.ViewModel
 	public class LoginUserViewModel : User
 	{
 		public long Id { get; set; }
-
 	}
+
+	public class UserProfileDataResonse 
+	{
+		public bool Success { get; set; }
+		public string ErrorMessage { get; set; }
+		public User Data { get; set; }
+	}
+
 	public class UserApiResponse
 	{
 		public bool Success { get; set; }
