@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
+
 namespace MarketPlaceSellerApp.Controllers
 {
 	[AllowAnonymous]
@@ -54,6 +55,5 @@ namespace MarketPlaceSellerApp.Controllers
 				return StatusCode(500, new { Success = false, ErrorMessage = ex.Message });
 			}
 		}
-
 	}
 }

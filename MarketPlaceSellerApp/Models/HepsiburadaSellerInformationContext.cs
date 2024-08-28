@@ -68,7 +68,6 @@ public partial class HepsiburadaSellerInformationContext : DbContext
             entity.Property(e => e.FirstName).HasMaxLength(50);
             entity.Property(e => e.LastName).HasMaxLength(50);
             entity.Property(e => e.Password).HasMaxLength(50);
-            entity.Property(e => e.Token).HasMaxLength(250);
             entity.Property(e => e.UserName).HasMaxLength(50);
         });
 

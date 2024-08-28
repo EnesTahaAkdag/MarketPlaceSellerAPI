@@ -4,8 +4,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
-
-
 namespace MarketPlaceSellerApp.Controllers
 {
 	[Authorize]
@@ -47,7 +45,7 @@ namespace MarketPlaceSellerApp.Controllers
 					Data = data,
 					TotalCount = totalCount
 				};
-				var json = JsonConvert.SerializeObject(response, new JsonSerializerSettings() { DateFormatString = "yyyy-MM-ddThh:mm:ssZ" });
+				var json = JsonConvert.SerializeObject(response, new JsonSerializerSettings() { DateFormatString = "dd-MM-yyyy" });
 
 				return Content(json, "application/json");
 			}
