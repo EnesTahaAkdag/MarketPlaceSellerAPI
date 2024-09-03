@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 namespace MarketPlaceSellerApp.Controllers
 {
-	[Authorize]
+	//[Authorize]
 	[ApiController]
 	[Route("[controller]")]
 	public class SendDataToChartController : Controller

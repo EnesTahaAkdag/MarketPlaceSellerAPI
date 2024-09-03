@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 namespace MarketPlaceSellerApp.Controllers
 {
-	[Authorize]
+	//[Authorize]
 	[ApiController]
 	[Route("[controller]")]
 	public class UserListAPIController : Controller
