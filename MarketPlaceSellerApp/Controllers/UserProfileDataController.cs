@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MarketPlaceSellerApp.Controllers
 {
-	[AllowAnonymous]
+	[Authorize]
 	[ApiController]
 	[Route("[controller]")]
 	public class UserProfileDataController : Controller
@@ -33,13 +33,18 @@ namespace MarketPlaceSellerApp.Controllers
 					u.LastName,
 					u.UserName,
 					u.Email,
-					u.Age
+					u.Age,
+					u.ProfileImage,
 				})
 				.FirstOrDefaultAsync();
 
 			if (user == null)
 			{
-				return NotFound(new { Success = false, ErrorMessage = "Kullanıcı Bulunamadı" });
+				return NotFound(new 
+				{ 
+					Success = false
+					, ErrorMessage = "Kullanıcı Bulunamadı" 
+				});
 			}
 			else
 			{

@@ -1,12 +1,14 @@
 ﻿using MarketPlaceSellerApp.HashingPassword;
 using MarketPlaceSellerApp.Models;
 using MarketPlaceSellerApp.ViewModel;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace MarketPlaceSellerApp.Controllers
 {
+	[Authorize]
 	[Route("[controller]")]
 	[ApiController]
 	public class UserPasswordApiController : ControllerBase

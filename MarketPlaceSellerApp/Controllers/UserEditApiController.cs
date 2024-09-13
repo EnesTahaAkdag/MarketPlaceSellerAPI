@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MarketPlaceSellerApp.Controllers
 {
-	//[Authorize]
+	[Authorize]
 	[Route("[controller]")]
 	[ApiController]
 	public class UserEditApiController : Controller

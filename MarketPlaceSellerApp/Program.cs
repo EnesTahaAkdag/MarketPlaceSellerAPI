@@ -8,6 +8,7 @@ using Microsoft.OpenApi.Models;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
+
 builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.AddSwaggerGen(c =>
@@ -15,22 +16,26 @@ builder.Services.AddSwaggerGen(c =>
 	c.AddSecurityDefinition("basic", new OpenApiSecurityScheme
 	{
 		In = ParameterLocation.Header,
-		Description = "basic authorization header using the basic scheme.",
-		Name = "authorization",
+		Description = "Basic authentication header using the basic scheme.",
+		Name = "Authorization",
 		Type = SecuritySchemeType.Http,
 		Scheme = "basic"
 	});
-	c.AddSecurityRequirement(new OpenApiSecurityRequirement {
+
+	c.AddSecurityRequirement(new OpenApiSecurityRequirement
+	{
+		{
+			new OpenApiSecurityScheme
 			{
-				new OpenApiSecurityScheme {
-					Reference = new OpenApiReference {
-						Type = ReferenceType.SecurityScheme,
-						Id = "basic"
-					}
-				},
-				new string[] {}
-			}
-		});
+				Reference = new OpenApiReference
+				{
+					Type = ReferenceType.SecurityScheme,
+					Id = "basic"
+				}
+			},
+			new string[] { }
+		}
+	});
 });
 
 builder.Services.AddTransient<AuthHelpers>();
@@ -55,6 +60,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseStaticFiles();
 
 app.UseAuthentication();
 app.UseAuthorization();

@@ -1,8 +1,8 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Http;
 
 namespace MarketPlaceSellerApp.ViewModel
 {
-
 	public class User
 	{
 		[StringLength(50, ErrorMessage = "50 Karakterden Fazla Giriş Yapılamaz")]
@@ -22,14 +22,12 @@ namespace MarketPlaceSellerApp.ViewModel
 		[EmailAddress(ErrorMessage = "Geçerli bir email adresi giriniz.")]
 		public string Email { get; set; }
 
-        public DateTime? Age { get; set; }
+		public DateTime? Age { get; set; }
 
 		[DataType(DataType.Password)]
 		[Required(ErrorMessage = "Lütfen Şifre Giriniz")]
 		[RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])[a-zA-Z\d]{8,}$", ErrorMessage = "En az 8 karakterlik bir parola büyük ve küçük harflerin bir kombinasyonunu içermelidir.")]
 		public string Password { get; set; }
-
-
 	}
 
 	public class LoginUser
@@ -68,7 +66,6 @@ namespace MarketPlaceSellerApp.ViewModel
 
 	public class UpdatePassword
 	{
-
 		[StringLength(50, ErrorMessage = "50 Karakterden Fazla Giriş Yapılamaz")]
 		[Required(ErrorMessage = "Kullanıcı Adı Boş Bırakılamaz")]
 		public string UserName { get; set; }
@@ -96,7 +93,22 @@ namespace MarketPlaceSellerApp.ViewModel
 		public long Id { get; set; }
 	}
 
-	public class UserProfileDataResonse 
+	public class UpdateProfilePhoto
+	{
+		public string UserName { get; set; }
+
+		// Use IFormFile for handling file uploads
+		public IFormFile ProfilePhoto { get; set; }
+	}
+
+	public class ProfilePhotoApiResponse
+	{
+		public bool Success { get; set; }
+		public string ErrorMessage { get; set; }
+		public UpdateProfilePhoto Data { get; set; }
+	}
+
+	public class UserProfileDataResponse
 	{
 		public bool Success { get; set; }
 		public string ErrorMessage { get; set; }
@@ -110,7 +122,7 @@ namespace MarketPlaceSellerApp.ViewModel
 		public List<UserList> Data { get; set; }
 		public int TotalCount { get; set; }
 	}
-	
+
 	public class UserUpdateApiResponse
 	{
 		public bool Success { get; set; }

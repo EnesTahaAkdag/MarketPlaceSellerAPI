@@ -20,4 +20,6 @@ public partial class UserDatum
     public DateTime? Age { get; set; }
 
     public string Password { get; set; }
+
+    public string ProfileImage { get; set; }
 }
