@@ -1,22 +1,81 @@
 ﻿using MarketPlaceSellerApp.Models;
 using MarketPlaceSellerApp.ViewModel;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
+
 namespace MarketPlaceSellerApp.Controllers
 {
 	[Authorize]
-	[ApiController]
 	[Route("[controller]")]
-	public class UserListAPIController : Controller
+	[ApiController]
+	public class UserDataSendApisController : ControllerBase
 	{
 		private readonly HepsiburadaSellerInformationContext _context;
 
-		public UserListAPIController(HepsiburadaSellerInformationContext context)
+		public UserDataSendApisController(HepsiburadaSellerInformationContext context)
 		{
 			_context = context;
 		}
+
+		[HttpGet("DataSend")]
+		public async Task<IActionResult> DataSend(string userName)
+		{
+			if (string.IsNullOrEmpty(userName))
+			{
+				return BadRequest(new { Success = false, ErrorMessage = "Kullanıcı Adı Boş Olamaz" });
+			}
+			else
+			{
+				try
+				{
+					var user = await _context.UserData
+					.Where(u => u.UserName == userName)
+					.Select(u => new
+					{
+						u.FirstName,
+						u.LastName,
+						u.UserName,
+						u.Email,
+						u.Age,
+						ProfileImageUrl = string.IsNullOrEmpty(u.ProfileImage)
+							? null
+							: $"{Request.Scheme}://{Request.Host}/images/{u.ProfileImage}"
+					})
+					.FirstOrDefaultAsync();
+
+					if (user == null)
+					{
+						return NotFound(new
+						{
+							Success = false,
+							ErrorMessage = "Kullanıcı Bulunamadı"
+						});
+					}
+					else
+					{
+						return Ok(new
+						{
+							Success = true,
+							Data = user
+						});
+					}
+				}
+				catch (Exception ex)
+				{
+					return StatusCode(500, new
+					{
+						Success = false,
+						ErrorMessage = ex.Message
+					});
+				}
+			}
+		}
+
+
+
 
 		[HttpGet("UserList")]
 		public async Task<ActionResult> UserList()
@@ -56,7 +115,7 @@ namespace MarketPlaceSellerApp.Controllers
 					Success = false,
 					ErrorMessage = ex.Message,
 				};
-				return Json(response);
+				return BadRequest(response);
 			}
 		}
 	}

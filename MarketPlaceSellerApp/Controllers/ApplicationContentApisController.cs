@@ -1,19 +1,20 @@
 ﻿using MarketPlaceSellerApp.Models;
 using MarketPlaceSellerApp.ViewModel;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace MarketPlaceSellerApp.Controllers
 {
 	[Authorize]
-	[ApiController]
 	[Route("[controller]")]
-	public class DataSendAppController : Controller
+	[ApiController]
+	public class ApplicationContentApisController : ControllerBase
 	{
 		private readonly HepsiburadaSellerInformationContext _context;
 
-		public DataSendAppController(HepsiburadaSellerInformationContext context)
+		public ApplicationContentApisController(HepsiburadaSellerInformationContext context)
 		{
 			_context = context;
 		}
@@ -43,7 +44,7 @@ namespace MarketPlaceSellerApp.Controllers
 				  .ToListAsync();
 
 
-				return Json(new ApiResponse
+				return Ok(new ApiResponse
 				{
 					Success = true,
 					ErrorMessage = null,
@@ -56,11 +57,52 @@ namespace MarketPlaceSellerApp.Controllers
 			}
 			catch (Exception ex)
 			{
-				return Json(new ApiResponse
+				return BadRequest(new ApiResponse
 				{
 					Success = false,
 					ErrorMessage = ex.Message,
 				});
+			}
+		}
+
+
+
+		[HttpGet("ChartData")]
+		public async Task<IActionResult> ChartData()
+		{
+			try
+			{
+				int count = _context.SellerInformations.Count();
+				int totalCount = await _context.SellerInformations.CountAsync();
+				var data = await (from c in _context.SellerInformations
+								  orderby c.Id
+								  select new SellerRaitingChartViewModel
+								  {
+									  StoreName = c.StoreName,
+									  RatingScore = c.RatingScore,
+								  })
+								  .Take(count)
+								  .ToListAsync();
+
+				var response = new ApiResponses
+				{
+					Success = true,
+					ErrorMessage = null,
+					Data = data,
+					Count = count,
+					TotalCount = totalCount
+				};
+				return Ok(response);
+			}
+			catch (Exception ex)
+			{
+				var response = new ApiResponse
+				{
+					Success = false,
+					ErrorMessage = ex.Message
+				};
+
+				return BadRequest(response);
 			}
 		}
 	}
