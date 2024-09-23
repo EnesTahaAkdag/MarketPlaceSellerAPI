@@ -59,6 +59,68 @@ namespace MarketPlaceSellerApp.Controllers
 		{
 			try
 			{
+				// Kullanıcıyı veritabanında bul
+				var user = await _context.UserData.FirstOrDefaultAsync(m => m.UserName == model.UserName);
+
+				if (user != null)
+				{
+					// Eğer resim dosyası gönderildiyse işle
+					if (model.ProfileImage != null)
+					{
+						var fileName = $"{Guid.NewGuid().ToString("N")}.jpg"; // Benzersiz dosya adı oluştur
+						var filePath = Path.Combine(_environment.ContentRootPath, "wwwroot", "profile_images", fileName); // Dosya yolu
+
+						Directory.CreateDirectory(Path.GetDirectoryName(filePath)); // Klasör yoksa oluştur
+
+						// Dosya sistemine resim dosyasını kaydet
+						await using (var stream = new FileStream(filePath, FileMode.Create))
+						{
+							await model.ProfileImage.CopyToAsync(stream);
+						}
+
+						// Kullanıcının profil resmini güncelle
+						user.ProfileImage = fileName;
+						_context.Update(user);
+						await _context.SaveChangesAsync();
+
+						return Ok(new
+						{
+							Success = true,
+							Message = "Profil Resmi Başarıyla Güncellendi"
+						});
+					}
+					else
+					{
+						return BadRequest(new
+						{
+							Success = false,
+							ErrorMessage = "Geçerli bir resim dosyası yükleyin."
+						});
+					}
+				}
+				else
+				{
+					return BadRequest(new
+					{
+						Success = false,
+						ErrorMessage = "Kullanıcı Bulunamadı."
+					});
+				}
+			}
+			catch (Exception ex)
+			{
+				return StatusCode(500, new
+				{
+					Success = false,
+					ErrorMessage = ex.Message
+				});
+			}
+		}
+		[HttpPost("UpdateUserProfileImage")]
+		public async Task<IActionResult> UpdateUserProfilePhoto([FromForm] UpdateProfilePhoto model)
+		{
+			try
+			{
 				var user = await _context.UserData.FirstOrDefaultAsync(m => m.UserName == model.UserName);
 
 				if (user != null)
@@ -66,13 +128,13 @@ namespace MarketPlaceSellerApp.Controllers
 					if (model.ProfileImage != null)
 					{
 						var fileName = $"{Guid.NewGuid().ToString("N")}.jpg";
-						var filePath = Path.Combine(_environment.ContentRootPath, "wwwroot", "uploads", fileName);
+						var filePath = Path.Combine(_environment.ContentRootPath, "wwwroot", "profile_images", fileName);
 
 						Directory.CreateDirectory(Path.GetDirectoryName(filePath));
 
 						await using (var stream = new FileStream(filePath, FileMode.Create))
 						{
-							await model.ProfileImage.CopyToAsync(stream); 
+							await model.ProfileImage.CopyToAsync(stream);
 						}
 
 						user.ProfileImage = fileName;
@@ -112,6 +174,7 @@ namespace MarketPlaceSellerApp.Controllers
 				});
 			}
 		}
+
 
 
 

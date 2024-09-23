@@ -95,7 +95,7 @@ namespace MarketPlaceSellerApp.ViewModel
 	public class UpdateProfilePhoto
 	{
 		public string UserName { get; set; }
-		public Stream ProfileImage { get; set; }
+		public IFormFile ProfileImage { get; set; }
 	}
 
 	public class ProfilePhotoApiResponse
