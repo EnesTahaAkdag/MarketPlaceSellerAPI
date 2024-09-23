@@ -8,7 +8,7 @@ namespace MarketPlaceSellerApp.Helpers
 {
 	public class AuthHelpers
 	{
-		private readonly HepsiburadaSellerInformationContext _context;
+		public readonly HepsiburadaSellerInformationContext _context;
 
 		public AuthHelpers(HepsiburadaSellerInformationContext context)
 		{

@@ -11,11 +11,11 @@ namespace MarketPlaceSellerApp.Controllers
 	[Authorize]
 	[Route("[controller]")]
 	[ApiController]
-	public class UserDataSendApisController : ControllerBase
+	public class UserDataSendApiController : ControllerBase
 	{
 		private readonly HepsiburadaSellerInformationContext _context;
 
-		public UserDataSendApisController(HepsiburadaSellerInformationContext context)
+		public UserDataSendApiController(HepsiburadaSellerInformationContext context)
 		{
 			_context = context;
 		}
@@ -33,6 +33,7 @@ namespace MarketPlaceSellerApp.Controllers
 				{
 					var user = await _context.UserData
 					.Where(u => u.UserName == userName)
+					.AsNoTracking()
 					.Select(u => new
 					{
 						u.FirstName,
@@ -96,6 +97,7 @@ namespace MarketPlaceSellerApp.Controllers
 									  Age = c.Age,
 								  })
 								  .Take(count)
+								  .AsNoTracking()
 								  .ToListAsync();
 				var response = new UserApiResponse
 				{

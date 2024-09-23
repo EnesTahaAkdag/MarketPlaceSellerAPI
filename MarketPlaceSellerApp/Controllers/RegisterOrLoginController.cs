@@ -1,30 +1,28 @@
 ﻿using MarketPlaceSellerApp.HashingPassword;
+using MarketPlaceSellerApp.Helpers;
 using MarketPlaceSellerApp.Models;
 using MarketPlaceSellerApp.ViewModel;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace MarketPlaceSellerApp.Controllers
 {
-	[AllowAnonymous]
-	[ApiController]
 	[Route("[controller]")]
-	public class RegisterAPIController : Controller
+	[ApiController]
+	public class RegisterOrLoginApiController : ControllerBase
 	{
-		private readonly HepsiburadaSellerInformationContext _context;
+		private readonly AuthHelpers _authHelpers;
 		private readonly IWebHostEnvironment _webHostEnvironment;
 
-		public RegisterAPIController(HepsiburadaSellerInformationContext context, IWebHostEnvironment webHostEnvironment)
+		public RegisterOrLoginApiController(AuthHelpers authHelpers, IWebHostEnvironment webHostEnvironment)
 		{
-			_context = context;
+			_authHelpers = authHelpers;
 			_webHostEnvironment = webHostEnvironment;
 		}
 
 		[HttpPost("RegisterUser")]
 		public async Task<IActionResult> RegisterUser([FromForm] User model, IFormFile profileImage)
 		{
-			// Validate the model state
 			if (!ModelState.IsValid)
 			{
 				return BadRequest(new { Success = false, ErrorMessage = "Geçersiz model girdisi." });
@@ -32,8 +30,7 @@ namespace MarketPlaceSellerApp.Controllers
 
 			try
 			{
-				// Check if the username or email is already in use
-				var existingUser = await _context.UserData
+				var existingUser = await _authHelpers._context.UserData
 					.AsNoTracking()
 					.FirstOrDefaultAsync(m => m.UserName == model.UserName || m.Email == model.Email);
 
@@ -49,38 +46,30 @@ namespace MarketPlaceSellerApp.Controllers
 					}
 				}
 
-				// Hash the password before saving to the database
 				string hashPassword = HashingAndVerifyPassword.HashingPassword.HashPassword(model.Password);
 
-				// Handle profile image upload
 				string profileImagePath = null;
 
 				if (profileImage != null && profileImage.Length > 0)
 				{
-					// Generate a unique filename using GUID
 					var uniqueFileName = Guid.NewGuid().ToString() + Path.GetExtension(profileImage.FileName);
 
-					// Get the path to save the image
 					var uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "uploads", "profile_images");
 					if (!Directory.Exists(uploadsFolder))
 					{
 						Directory.CreateDirectory(uploadsFolder);
 					}
 
-					// Create the full path
 					profileImagePath = Path.Combine(uploadsFolder, uniqueFileName);
 
-					// Copy the file to the target folder
 					using (var fileStream = new FileStream(profileImagePath, FileMode.Create))
 					{
 						await profileImage.CopyToAsync(fileStream);
 					}
 
-					// Set the path to save in the database
 					profileImagePath = Path.Combine("uploads", "profile_images", uniqueFileName);
 				}
 
-				// Create new UserDatum object
 				var user = new UserDatum
 				{
 					FirstName = model.FirstName,
@@ -89,21 +78,46 @@ namespace MarketPlaceSellerApp.Controllers
 					Email = model.Email,
 					Age = model.Age,
 					Password = hashPassword,
-					ProfileImage = profileImagePath // Save the image path in the database
+					ProfileImage = profileImagePath
 				};
 
-				// Save the new user to the database
-				await _context.UserData.AddAsync(user);
-				await _context.SaveChangesAsync();
+				await _authHelpers._context.UserData.AddAsync(user);
+				await _authHelpers._context.SaveChangesAsync();
 
-				// Return success response
 				return Ok(new { Success = true, Message = "Kullanıcı başarıyla kaydedildi." });
 			}
 			catch (Exception ex)
 			{
-				// Log the exception (optional, not shown here)
 				return StatusCode(500, new { Success = false, ErrorMessage = $"Sunucu hatası: {ex.Message}" });
+			}
+		}
+
+
+
+		[HttpPost("LoginUserData")]
+		public async Task<IActionResult> LoginUserData([FromBody] LoginUser model)
+		{
+			if (model == null)
+			{
+				return BadRequest(new { Success = false, Message = "Boş Değer Gönderilemez" });
+			}
+			try
+			{
+				var authResult = await _authHelpers.UserAuthentication(model);
+				if (authResult is OkObjectResult)
+				{
+					return authResult;
+				}
+				else
+				{
+					return authResult;
+				}
+			}
+			catch (Exception ex)
+			{
+				return StatusCode(500, new { Success = false, ErrorMessage = ex.Message });
 			}
 		}
 	}
 }
+

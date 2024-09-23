@@ -10,11 +10,11 @@ namespace MarketPlaceSellerApp.Controllers
 	[Authorize]
 	[Route("[controller]")]
 	[ApiController]
-	public class ApplicationContentApisController : ControllerBase
+	public class ApplicationContentApiController : ControllerBase
 	{
 		private readonly HepsiburadaSellerInformationContext _context;
 
-		public ApplicationContentApisController(HepsiburadaSellerInformationContext context)
+		public ApplicationContentApiController(HepsiburadaSellerInformationContext context)
 		{
 			_context = context;
 		}
@@ -41,6 +41,7 @@ namespace MarketPlaceSellerApp.Controllers
 								  })
 				  .Skip((currentPage - 1) * pageSize.GetValueOrDefault())
 				  .Take(pageSize.GetValueOrDefault())
+				  .AsNoTracking()
 				  .ToListAsync();
 
 
@@ -82,6 +83,7 @@ namespace MarketPlaceSellerApp.Controllers
 									  RatingScore = c.RatingScore,
 								  })
 								  .Take(count)
+								  .AsNoTracking()
 								  .ToListAsync();
 
 				var response = new ApiResponses
