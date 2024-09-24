@@ -52,24 +52,8 @@ namespace MarketPlaceSellerApp.Controllers
 
 				if (profileImage != null && profileImage.Length > 0)
 				{
-					var uniqueFileName = Guid.NewGuid().ToString() + Path.GetExtension(profileImage.FileName);
-
-					var uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "uploads", "profile_images");
-					if (!Directory.Exists(uploadsFolder))
-					{
-						Directory.CreateDirectory(uploadsFolder);
-					}
-
-					profileImagePath = Path.Combine(uploadsFolder, uniqueFileName);
-
-					using (var fileStream = new FileStream(profileImagePath, FileMode.Create))
-					{
-						await profileImage.CopyToAsync(fileStream);
-					}
-
-					profileImagePath = Path.Combine("uploads", "profile_images", uniqueFileName);
+					profileImagePath = await SaveProfileImageAsync(profileImage);
 				}
-
 				var user = new UserDatum
 				{
 					FirstName = model.FirstName,
@@ -92,6 +76,30 @@ namespace MarketPlaceSellerApp.Controllers
 			}
 		}
 
+		private async Task<string> SaveProfileImageAsync(IFormFile profileImage)
+		{
+			try
+			{
+				var uniqueFileName = $"{Guid.NewGuid().ToString("N")}.jpg";
+
+				var uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "uploads", "profile_images");
+
+				Directory.CreateDirectory(Path.GetDirectoryName(uploadsFolder));
+
+				var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+				using (var fileStream = new FileStream(filePath, FileMode.Create))
+				{
+					await profileImage.CopyToAsync(fileStream);
+				}
+
+				return Path.Combine("uploads", "profile_images", uniqueFileName);
+			}
+			catch (Exception ex)
+			{
+				throw new Exception($"Profil resmi yüklenirken hata oluştu: {ex.Message}");
+			}
+		}
 
 
 		[HttpPost("LoginUserData")]

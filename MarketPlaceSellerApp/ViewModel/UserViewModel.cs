@@ -2,34 +2,37 @@
 
 namespace MarketPlaceSellerApp.ViewModel
 {
-    public class User
-    {
-        [StringLength(50, ErrorMessage = "50 karakterden fazla giriş yapılamaz.")]
-        [Required(ErrorMessage = "İsim boş bırakılamaz.")]
-        public string FirstName { get; set; }
+	public class User
+	{
+		[StringLength(50, ErrorMessage = "50 karakterden fazla giriş yapılamaz.")]
+		[Required(ErrorMessage = "İsim boş bırakılamaz.")]
+		public string FirstName { get; set; }
 
-        [StringLength(50, ErrorMessage = "50 karakterden fazla giriş yapılamaz.")]
-        [Required(ErrorMessage = "Soyisim boş bırakılamaz.")]
-        public string LastName { get; set; }
+		[StringLength(50, ErrorMessage = "50 karakterden fazla giriş yapılamaz.")]
+		[Required(ErrorMessage = "Soyisim boş bırakılamaz.")]
+		public string LastName { get; set; }
 
-        [StringLength(50, ErrorMessage = "50 karakterden fazla giriş yapılamaz.")]
-        [Required(ErrorMessage = "Kullanıcı adı boş bırakılamaz.")]
-        public string UserName { get; set; }
+		[StringLength(50, ErrorMessage = "50 karakterden fazla giriş yapılamaz.")]
+		[Required(ErrorMessage = "Kullanıcı adı boş bırakılamaz.")]
+		public string UserName { get; set; }
 
-        [StringLength(50, ErrorMessage = "50 karakterden fazla giriş yapılamaz.")]
-        [Required(ErrorMessage = "Email boş bırakılamaz.")]
-        [EmailAddress(ErrorMessage = "Geçerli bir email adresi giriniz.")]
-        public string Email { get; set; }
+		[StringLength(50, ErrorMessage = "50 karakterden fazla giriş yapılamaz.")]
+		[Required(ErrorMessage = "Email boş bırakılamaz.")]
+		[EmailAddress(ErrorMessage = "Geçerli bir email adresi giriniz.")]
+		public string Email { get; set; }
 
-        public DateTime? Age { get; set; }
+		public DateTime? Age { get; set; }
 
-        [DataType(DataType.Password)]
-        [Required(ErrorMessage = "Lütfen şifre giriniz.")]
-        [RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])[a-zA-Z\d]{8,}$", ErrorMessage = "En az 8 karakterlik bir parola büyük ve küçük harflerin bir kombinasyonunu içermelidir.")]
-        public string Password { get; set; }
-    }
+		[DataType(DataType.Password)]
+		[Required(ErrorMessage = "Lütfen şifre giriniz.")]
+		[RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])[a-zA-Z\d]{8,}$", ErrorMessage = "En az 8 karakterlik bir parola büyük ve küçük harflerin bir kombinasyonunu içermelidir.")]
+		public string Password { get; set; }
 
-    public class LoginUser
+		public IFormFile ProfileImage { get; set; }
+	}
+
+
+	public class LoginUser
     {
         [StringLength(50, ErrorMessage = "50 karakterden fazla giriş yapılamaz.")]
         [Required(ErrorMessage = "Kullanıcı adı boş bırakılamaz.")]
