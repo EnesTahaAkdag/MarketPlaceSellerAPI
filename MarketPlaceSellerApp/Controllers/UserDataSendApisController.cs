@@ -94,7 +94,7 @@ namespace MarketPlaceSellerApp.Controllers
 									  FirstName = c.FirstName,
 									  LastName = c.LastName,
 									  UserName = c.UserName,
-									  Age = c.Age,
+									  Age = c.Age.GetValueOrDefault().ToString("yyyy-MM-dd HH:mm"),
 								  })
 								  .Take(count)
 								  .AsNoTracking()

@@ -21,14 +21,14 @@ namespace MarketPlaceSellerApp.ViewModel
 		[EmailAddress(ErrorMessage = "Geçerli bir email adresi giriniz.")]
 		public string Email { get; set; }
 
-		public DateTime? Age { get; set; }
+		public string Age { get; set; }
 
 		[DataType(DataType.Password)]
 		[Required(ErrorMessage = "Lütfen şifre giriniz.")]
 		[RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])[a-zA-Z\d]{8,}$", ErrorMessage = "En az 8 karakterlik bir parola büyük ve küçük harflerin bir kombinasyonunu içermelidir.")]
 		public string Password { get; set; }
 
-		public IFormFile ProfileImage { get; set; }
+		public string ProfileImage { get; set; }
 	}
 
 

@@ -9,19 +9,21 @@ namespace MarketPlaceSellerApp.Controllers
 {
 	[Route("[controller]")]
 	[ApiController]
-	public class RegisterOrLoginApiController : ControllerBase
+	public class RegisterAndLoginApiController : ControllerBase
 	{
+		public readonly HepsiburadaSellerInformationContext _context;
 		private readonly AuthHelpers _authHelpers;
 		private readonly IWebHostEnvironment _webHostEnvironment;
 
-		public RegisterOrLoginApiController(AuthHelpers authHelpers, IWebHostEnvironment webHostEnvironment)
+		public RegisterAndLoginApiController(HepsiburadaSellerInformationContext context, AuthHelpers authHelpers, IWebHostEnvironment webHostEnvironment)
 		{
+			_context = context;
 			_authHelpers = authHelpers;
 			_webHostEnvironment = webHostEnvironment;
 		}
 
 		[HttpPost("RegisterUser")]
-		public async Task<IActionResult> RegisterUser([FromForm] User model, IFormFile profileImage)
+		public async Task<IActionResult> RegisterUser([FromBody] User model) 
 		{
 			if (!ModelState.IsValid)
 			{
@@ -30,43 +32,44 @@ namespace MarketPlaceSellerApp.Controllers
 
 			try
 			{
-				var existingUser = await _authHelpers._context.UserData
-					.AsNoTracking()
+				var existingUser = await _context.UserData
 					.FirstOrDefaultAsync(m => m.UserName == model.UserName || m.Email == model.Email);
 
 				if (existingUser != null)
 				{
-					if (existingUser.UserName == model.UserName)
-					{
-						return BadRequest(new { Success = false, ErrorMessage = "Kullanıcı adı zaten mevcut." });
-					}
-					if (existingUser.Email == model.Email)
-					{
-						return BadRequest(new { Success = false, ErrorMessage = "Email adresi zaten kayıtlı." });
-					}
+					var errorMessage = existingUser.UserName == model.UserName
+						? "Kullanıcı adı zaten mevcut."
+						: "Email adresi zaten kayıtlı.";
+					return BadRequest(new { Success = false, ErrorMessage = errorMessage });
 				}
 
 				string hashPassword = HashingAndVerifyPassword.HashingPassword.HashPassword(model.Password);
 
 				string profileImagePath = null;
 
-				if (profileImage != null && profileImage.Length > 0)
+				if (!string.IsNullOrWhiteSpace(model.ProfileImage))
 				{
-					profileImagePath = await SaveProfileImageAsync(profileImage);
+					var profileImageBytes = Convert.FromBase64String(model.ProfileImage);
+					profileImagePath = await SaveProfileImageAsync(profileImageBytes); 
 				}
+
 				var user = new UserDatum
 				{
 					FirstName = model.FirstName,
 					LastName = model.LastName,
 					UserName = model.UserName,
 					Email = model.Email,
-					Age = model.Age,
 					Password = hashPassword,
 					ProfileImage = profileImagePath
 				};
 
-				await _authHelpers._context.UserData.AddAsync(user);
-				await _authHelpers._context.SaveChangesAsync();
+				if (!string.IsNullOrWhiteSpace(model.Age))
+				{
+					user.Age = Convert.ToDateTime(model.Age);
+				}
+
+				_context.UserData.Add(user);
+				await _context.SaveChangesAsync();
 
 				return Ok(new { Success = true, Message = "Kullanıcı başarıyla kaydedildi." });
 			}
@@ -76,24 +79,20 @@ namespace MarketPlaceSellerApp.Controllers
 			}
 		}
 
-		private async Task<string> SaveProfileImageAsync(IFormFile profileImage)
+		private async Task<string> SaveProfileImageAsync(byte[] profileImageBytes)
 		{
 			try
 			{
-				var uniqueFileName = $"{Guid.NewGuid().ToString("N")}.jpg";
+				var fileName = $"{Guid.NewGuid().ToString("N")}.jpg";
+				var filePath = Path.Combine(_webHostEnvironment.ContentRootPath, "wwwroot", "profile_images");
 
-				var uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "uploads", "profile_images");
+				Directory.CreateDirectory(filePath);
 
-				Directory.CreateDirectory(Path.GetDirectoryName(uploadsFolder));
+				var fullFilePath = Path.Combine(filePath, fileName);
 
-				var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+				await System.IO.File.WriteAllBytesAsync(fullFilePath, profileImageBytes);
 
-				using (var fileStream = new FileStream(filePath, FileMode.Create))
-				{
-					await profileImage.CopyToAsync(fileStream);
-				}
-
-				return Path.Combine("uploads", "profile_images", uniqueFileName);
+				return Path.Combine(fileName);
 			}
 			catch (Exception ex)
 			{
@@ -107,25 +106,18 @@ namespace MarketPlaceSellerApp.Controllers
 		{
 			if (model == null)
 			{
-				return BadRequest(new { Success = false, Message = "Boş Değer Gönderilemez" });
+				return BadRequest(new { Success = false, ErrorMessage = "Boş Değer Gönderilemez" });
 			}
+
 			try
 			{
 				var authResult = await _authHelpers.UserAuthentication(model);
-				if (authResult is OkObjectResult)
-				{
-					return authResult;
-				}
-				else
-				{
-					return authResult;
-				}
+				return authResult;
 			}
 			catch (Exception ex)
 			{
-				return StatusCode(500, new { Success = false, ErrorMessage = ex.Message });
+				return StatusCode(500, new { Success = false, ErrorMessage = $"Sunucu hatası: {ex.Message}" });
 			}
 		}
 	}
 }
-

@@ -11,6 +11,7 @@ builder.Services.AddControllers();
 
 builder.Services.AddEndpointsApiExplorer();
 
+
 builder.Services.AddSwaggerGen(c =>
 {
 	c.AddSecurityDefinition("basic", new OpenApiSecurityScheme
@@ -56,7 +57,11 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
 	app.UseSwagger();
-	app.UseSwaggerUI();
+	app.UseSwaggerUI(c =>
+	{
+		c.SwaggerEndpoint("/swagger/v1/swagger.json","MobilApp.Api V1");
+		c.DocExpansion(Swashbuckle.AspNetCore.SwaggerUI.DocExpansion.None);
+	});
 }
 
 app.UseHttpsRedirection();
