@@ -23,7 +23,7 @@ namespace MarketPlaceSellerApp.Controllers
 		}
 
 		[HttpPost("RegisterUser")]
-		public async Task<IActionResult> RegisterUser([FromBody] User model) 
+		public async Task<IActionResult> RegisterUser([FromForm] User model)
 		{
 			if (!ModelState.IsValid)
 			{
@@ -32,6 +32,7 @@ namespace MarketPlaceSellerApp.Controllers
 
 			try
 			{
+				// Kullanıcı adı veya email'in daha önce kullanılıp kullanılmadığını kontrol et
 				var existingUser = await _context.UserData
 					.FirstOrDefaultAsync(m => m.UserName == model.UserName || m.Email == model.Email);
 
@@ -43,16 +44,18 @@ namespace MarketPlaceSellerApp.Controllers
 					return BadRequest(new { Success = false, ErrorMessage = errorMessage });
 				}
 
+				// Şifreyi hashle
 				string hashPassword = HashingAndVerifyPassword.HashingPassword.HashPassword(model.Password);
 
+				// Profil resmi kaydetme
 				string profileImagePath = null;
 
-				if (!string.IsNullOrWhiteSpace(model.ProfileImage))
+				if (model.ProfileImage != null)
 				{
-					var profileImageBytes = Convert.FromBase64String(model.ProfileImage);
-					profileImagePath = await SaveProfileImageAsync(profileImageBytes); 
+					profileImagePath = await SaveProfileImageAsync(model.ProfileImage);
 				}
 
+				// Yeni kullanıcı oluştur
 				var user = new UserDatum
 				{
 					FirstName = model.FirstName,
@@ -63,11 +66,13 @@ namespace MarketPlaceSellerApp.Controllers
 					ProfileImage = profileImagePath
 				};
 
+				// Yaş bilgisi varsa kaydet
 				if (!string.IsNullOrWhiteSpace(model.Age))
 				{
 					user.Age = Convert.ToDateTime(model.Age);
 				}
 
+				// Kullanıcıyı veritabanına ekle ve kaydet
 				_context.UserData.Add(user);
 				await _context.SaveChangesAsync();
 
@@ -75,31 +80,40 @@ namespace MarketPlaceSellerApp.Controllers
 			}
 			catch (Exception ex)
 			{
+				// Hata oluştuğunda 500 döndür
 				return StatusCode(500, new { Success = false, ErrorMessage = $"Sunucu hatası: {ex.Message}" });
 			}
 		}
 
-		private async Task<string> SaveProfileImageAsync(byte[] profileImageBytes)
+
+		// Profil resmini kaydet
+		private async Task<string> SaveProfileImageAsync(IFormFile profileImageBytes)
 		{
 			try
 			{
+				// Dosya adı oluştur
 				var fileName = $"{Guid.NewGuid().ToString("N")}.jpg";
-				var filePath = Path.Combine(_webHostEnvironment.ContentRootPath, "wwwroot", "profile_images");
+				var filePath = Path.Combine(_webHostEnvironment.WebRootPath, "profile_images");
 
+				// Klasör yoksa oluştur
 				Directory.CreateDirectory(filePath);
 
+				// Dosya yolunu belirle
 				var fullFilePath = Path.Combine(filePath, fileName);
 
-				await System.IO.File.WriteAllBytesAsync(fullFilePath, profileImageBytes);
-
-				return Path.Combine(fileName);
+				// Dosyayı yaz
+				using (var fileStream = new FileStream(fullFilePath, FileMode.Create))
+				{
+					await profileImageBytes.CopyToAsync(fileStream);
+				}
+				// Sadece dosya adını döndür
+				return fileName;
 			}
 			catch (Exception ex)
 			{
 				throw new Exception($"Profil resmi yüklenirken hata oluştu: {ex.Message}");
 			}
 		}
-
 
 		[HttpPost("LoginUserData")]
 		public async Task<IActionResult> LoginUserData([FromBody] LoginUser model)
