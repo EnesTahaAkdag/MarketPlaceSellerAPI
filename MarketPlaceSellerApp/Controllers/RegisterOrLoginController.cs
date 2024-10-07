@@ -32,9 +32,9 @@ namespace MarketPlaceSellerApp.Controllers
 
 			try
 			{
-				// Kullanıcı adı veya email'in daha önce kullanılıp kullanılmadığını kontrol et
 				var existingUser = await _context.UserData
-					.FirstOrDefaultAsync(m => m.UserName == model.UserName || m.Email == model.Email);
+					.FirstOrDefaultAsync(m => m.UserName == model.UserName
+					|| m.Email == model.Email);
 
 				if (existingUser != null)
 				{
@@ -44,10 +44,8 @@ namespace MarketPlaceSellerApp.Controllers
 					return BadRequest(new { Success = false, ErrorMessage = errorMessage });
 				}
 
-				// Şifreyi hashle
 				string hashPassword = HashingAndVerifyPassword.HashingPassword.HashPassword(model.Password);
 
-				// Profil resmi kaydetme
 				string profileImagePath = null;
 
 				if (model.ProfileImage != null)
@@ -55,7 +53,6 @@ namespace MarketPlaceSellerApp.Controllers
 					profileImagePath = await SaveProfileImageAsync(model.ProfileImage);
 				}
 
-				// Yeni kullanıcı oluştur
 				var user = new UserDatum
 				{
 					FirstName = model.FirstName,
@@ -66,47 +63,38 @@ namespace MarketPlaceSellerApp.Controllers
 					ProfileImage = profileImagePath
 				};
 
-				// Yaş bilgisi varsa kaydet
 				if (!string.IsNullOrWhiteSpace(model.Age))
 				{
 					user.Age = Convert.ToDateTime(model.Age);
 				}
 
-				// Kullanıcıyı veritabanına ekle ve kaydet
 				_context.UserData.Add(user);
 				await _context.SaveChangesAsync();
 
-				return Ok(new { Success = true, Message = "Kullanıcı başarıyla kaydedildi." });
+				return Ok(new { Success = true, Message = "Kullanıcı başarıyla kaydedisldi." });
 			}
 			catch (Exception ex)
 			{
-				// Hata oluştuğunda 500 döndür
 				return StatusCode(500, new { Success = false, ErrorMessage = $"Sunucu hatası: {ex.Message}" });
 			}
 		}
 
 
-		// Profil resmini kaydet
 		private async Task<string> SaveProfileImageAsync(IFormFile profileImageBytes)
 		{
 			try
 			{
-				// Dosya adı oluştur
 				var fileName = $"{Guid.NewGuid().ToString("N")}.jpg";
 				var filePath = Path.Combine(_webHostEnvironment.WebRootPath, "profile_images");
 
-				// Klasör yoksa oluştur
 				Directory.CreateDirectory(filePath);
 
-				// Dosya yolunu belirle
 				var fullFilePath = Path.Combine(filePath, fileName);
 
-				// Dosyayı yaz
 				using (var fileStream = new FileStream(fullFilePath, FileMode.Create))
 				{
 					await profileImageBytes.CopyToAsync(fileStream);
 				}
-				// Sadece dosya adını döndür
 				return fileName;
 			}
 			catch (Exception ex)
@@ -131,6 +119,35 @@ namespace MarketPlaceSellerApp.Controllers
 			catch (Exception ex)
 			{
 				return StatusCode(500, new { Success = false, ErrorMessage = $"Sunucu hatası: {ex.Message}" });
+			}
+		}
+
+		[HttpGet("ForgetPassword")]
+		public async Task<IActionResult> ForgetPassword([FromQuery] ForgetPassword model)
+		{
+			if (model == null)
+			{
+				return BadRequest(new { Success = false, ErrorMessage = "veri boş geldi" });
+			}
+			else
+			{
+				try
+				{
+					var existingEmail = await _context.UserData
+						.FirstOrDefaultAsync(m => m.UserName == model.UserName);
+
+					if (existingEmail != null)
+					{
+
+						return Ok(new { Success = true, ErrorMessage = "E-posta doğrulandı Mail gönderildi" });
+					}
+					else
+						return NotFound(new { Success = false, ErrorMessage = "E-Posta Doğrulanamadı" });
+				}
+				catch (Exception ex)
+				{
+					return BadRequest(new { Success = false, ErrorMessage = $"Hata Oluştu: {ex.Message}" });
+				}
 			}
 		}
 	}

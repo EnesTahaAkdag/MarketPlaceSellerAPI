@@ -85,6 +85,11 @@ namespace MarketPlaceSellerApp.ViewModel
         public UpdatePassword Data { get; set; }
     }
 
+    public class ForgetPassword
+    {
+        public string UserName { get; set; }
+    }
+
     public class UserList : User
     {
         public long Id { get; set; }

@@ -22,4 +22,6 @@ public partial class UserDatum
     public string Password { get; set; }
 
     public string ProfileImage { get; set; }
+
+    public string ValidationCode { get; set; }
 }

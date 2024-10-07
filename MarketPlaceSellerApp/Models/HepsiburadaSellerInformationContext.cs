@@ -65,11 +65,17 @@ public partial class HepsiburadaSellerInformationContext : DbContext
             entity.HasKey(e => e.Id).HasName("PK_UserDat");
 
             entity.Property(e => e.Age).HasColumnType("date");
+            entity.Property(e => e.Email).HasMaxLength(256);
             entity.Property(e => e.FirstName).HasMaxLength(50);
             entity.Property(e => e.LastName).HasMaxLength(50);
-            entity.Property(e => e.Password).HasMaxLength(50);
+            entity.Property(e => e.Password)
+                .IsRequired()
+                .HasMaxLength(256);
             entity.Property(e => e.ProfileImage).HasMaxLength(150);
-            entity.Property(e => e.UserName).HasMaxLength(50);
+            entity.Property(e => e.UserName)
+                .IsRequired()
+                .HasMaxLength(50);
+            entity.Property(e => e.ValidationCode).HasMaxLength(5);
         });
 
         OnModelCreatingPartial(modelBuilder);

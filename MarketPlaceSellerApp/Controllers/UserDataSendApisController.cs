@@ -1,7 +1,6 @@
 ﻿using MarketPlaceSellerApp.Models;
 using MarketPlaceSellerApp.ViewModel;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
@@ -43,7 +42,7 @@ namespace MarketPlaceSellerApp.Controllers
 						u.Age,
 						ProfileImageUrl = string.IsNullOrEmpty(u.ProfileImage)
 							? null
-							: $"{Request.Scheme}://{Request.Host}/images/{u.ProfileImage}"
+							: $"https://c7c9-37-130-115-91.ngrok-free.app/profile_images/{u.ProfileImage}"
 					})
 					.FirstOrDefaultAsync();
 
@@ -74,7 +73,6 @@ namespace MarketPlaceSellerApp.Controllers
 				}
 			}
 		}
-
 
 
 
