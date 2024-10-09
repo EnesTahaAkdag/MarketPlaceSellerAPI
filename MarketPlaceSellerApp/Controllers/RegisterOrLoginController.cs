@@ -4,6 +4,11 @@ using MarketPlaceSellerApp.Models;
 using MarketPlaceSellerApp.ViewModel;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.Diagnostics.Contracts;
+using System.Drawing.Text;
+using System.Net;
+using System.Net.Mail;
 
 namespace MarketPlaceSellerApp.Controllers
 {
@@ -103,6 +108,11 @@ namespace MarketPlaceSellerApp.Controllers
 			}
 		}
 
+
+
+
+
+
 		[HttpPost("LoginUserData")]
 		public async Task<IActionResult> LoginUserData([FromBody] LoginUser model)
 		{
@@ -122,27 +132,107 @@ namespace MarketPlaceSellerApp.Controllers
 			}
 		}
 
-		[HttpGet("ForgetPassword")]
-		public async Task<IActionResult> ForgetPassword([FromQuery] ForgetPassword model)
+
+
+
+
+
+
+		[HttpPost("ForgetPassword")]
+		public async Task<ActionResult> ForgetPassword([FromBody] ForgetPassword model)
 		{
-			if (model == null)
+			if (model == null || string.IsNullOrEmpty(model.UserName))
 			{
-				return BadRequest(new { Success = false, ErrorMessage = "veri boş geldi" });
+				return BadRequest(new { Success = false, ErrorMessage = "Veri boş geldi" });
+			}
+
+			try
+			{
+				var existingUser = await _context.UserData
+					.FirstOrDefaultAsync(m => m.UserName == model.UserName);
+
+				if (existingUser != null)
+				{
+					Random r = new Random();
+					int randomCode = r.Next(100000, 999999);
+
+					existingUser.ValidationCode = randomCode.ToString();
+
+					_context.UserData.Update(existingUser);
+					await _context.SaveChangesAsync();
+
+					await SendEmailValidationCode(existingUser.UserName, randomCode);
+
+					return Ok(new { Success = true, ErrorMessage = "E-posta doğrulandı, Mail gönderildi" });
+				}
+				else
+				{
+					return NotFound(new { Success = false, ErrorMessage = "E-posta doğrulanamadı" });
+				}
+			}
+			catch (Exception ex)
+			{
+				return BadRequest(new { Success = false, ErrorMessage = $"Hata Oluştu: {ex.Message}" });
+			}
+		}
+
+
+		private async Task SendEmailValidationCode(string UserName, int validationCode)
+		{
+			var user = await _context.UserData.FirstOrDefaultAsync(u => u.UserName == UserName);
+
+			if (user != null)
+			{
+				string email = user.Email;
+
+				string subject = "Doğrulama Kodu";
+				string message = $"Doğrulama Kodunuz: {validationCode}";
+
+				await SendEmail(email, subject, message);
 			}
 			else
 			{
+				throw new Exception("Mail Adresi Bulunamadı");
+			}
+		}
+
+
+		private async Task SendEmail(string email, string subject, string message)
+		{
+			string smtpServer = "smtp.gmail.com";
+			int smtpPort = 587;
+			string smtpEmail = "akdagenestaha@gmail.com";
+			string smtpPassword = "aclb kead vwkg xvsm";
+
+			MailMessage mailMessage = new MailMessage
+			{
+				From = new MailAddress(smtpEmail),
+				Subject = subject,
+				Body = message,
+				IsBodyHtml = false
+			};
+
+			mailMessage.To.Add(email);
+
+			using (SmtpClient smtpClient = new SmtpClient(smtpServer, smtpPort))
+			{
+				smtpClient.Credentials = new NetworkCredential(smtpEmail, smtpPassword);
+				smtpClient.EnableSsl = true;
+
+				await smtpClient.SendMailAsync(mailMessage);
+			}
+
+			[HttpPost("VerifyCode")]
+			public async Task<ActionResult> VerifyCode([FromBody] VerificationCodeModel model)
+			{
+				if (model == null || model.VerificationCode > 0)
+				{
+					return BadRequest(new { Success = false, ErrorMessage = "Veri Boş Veya Hatalı Geldi" });
+				}
+
 				try
 				{
-					var existingEmail = await _context.UserData
-						.FirstOrDefaultAsync(m => m.UserName == model.UserName);
-
-					if (existingEmail != null)
-					{
-
-						return Ok(new { Success = true, ErrorMessage = "E-posta doğrulandı Mail gönderildi" });
-					}
-					else
-						return NotFound(new { Success = false, ErrorMessage = "E-Posta Doğrulanamadı" });
+					var existingCode = await _context.UserData.FirstOrDefaultAsync(m => m.ValidationCode = model.VerificationCode);
 				}
 				catch (Exception ex)
 				{

@@ -75,7 +75,7 @@ public partial class HepsiburadaSellerInformationContext : DbContext
             entity.Property(e => e.UserName)
                 .IsRequired()
                 .HasMaxLength(50);
-            entity.Property(e => e.ValidationCode).HasMaxLength(5);
+            entity.Property(e => e.ValidationCode).HasMaxLength(6);
         });
 
         OnModelCreatingPartial(modelBuilder);
