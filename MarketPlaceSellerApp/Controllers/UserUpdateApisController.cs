@@ -54,64 +54,7 @@ namespace MarketPlaceSellerApp.Controllers
 
 
 
-		[HttpPost("UpdateProfileImage")]
-		public async Task<IActionResult> UpdateProfilePhoto([FromForm] UpdateProfilePhoto model)
-		{
-			try
-			{
-				var user = await _context.UserData.AsNoTracking().FirstOrDefaultAsync(m => m.UserName == model.UserName);
-
-				if (user != null)
-				{
-					if (model.ProfileImage != null)
-					{
-						var fileName = $"{Guid.NewGuid().ToString("N")}.jpg";
-						var filePath = Path.Combine(_environment.ContentRootPath, "wwwroot", "profile_images", fileName);
-
-						Directory.CreateDirectory(Path.GetDirectoryName(filePath));
-
-						await using (var stream = new FileStream(filePath, FileMode.Create))
-						{
-							await model.ProfileImage.CopyToAsync(stream);
-						}
-
-						user.ProfileImage = fileName;
-						_context.Update(user);
-						await _context.SaveChangesAsync();
-
-						return Ok(new
-						{
-							Success = true,
-							Message = "Profil Resmi Başarıyla Güncellendi"
-						});
-					}
-					else
-					{
-						return BadRequest(new
-						{
-							Success = false,
-							ErrorMessage = "Geçerli bir resim dosyası yükleyin."
-						});
-					}
-				}
-				else
-				{
-					return BadRequest(new
-					{
-						Success = false,
-						ErrorMessage = "Kullanıcı Bulunamadı."
-					});
-				}
-			}
-			catch (Exception ex)
-			{
-				return StatusCode(500, new
-				{
-					Success = false,
-					ErrorMessage = ex.Message
-				});
-			}
-		}
+		
 
 
 
@@ -175,11 +118,6 @@ namespace MarketPlaceSellerApp.Controllers
 				});
 			}
 		}
-
-
-
-
-
 
 		[HttpPost("EditUserData")]
 		public async Task<IActionResult> UpdateUserData([FromBody] UpdateUser model)

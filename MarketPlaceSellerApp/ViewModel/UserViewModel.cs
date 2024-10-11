@@ -80,7 +80,9 @@ namespace MarketPlaceSellerApp.ViewModel
 
 	public class VerificationCodeModel
 	{
-		public int VerificationCode { get; set; }
+        public string UserName { get; set; }
+
+		public string ValidationCode { get; set; }
 	}
 
 	public class VerificationCodeApiResponse
@@ -90,6 +92,21 @@ namespace MarketPlaceSellerApp.ViewModel
 		public string ErrorMessage { get; set; }
 
 		public VerificationCodeModel Data { get; set; }
+	}
+
+	public class ChancePasswordModel
+	{
+        public string UserName { get; set; }
+		public string Password { get; set; }
+	}
+
+	public class ChancePasswordApiResponse
+	{
+		public bool Succes { get; set; }
+
+		public string ErrorMessage { get; set; }
+
+		public ChancePasswordModel Data { get; set; }
 	}
 
 	public class UpdatePasswordApiResponse
