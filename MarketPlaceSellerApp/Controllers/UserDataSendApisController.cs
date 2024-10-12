@@ -26,11 +26,10 @@ namespace MarketPlaceSellerApp.Controllers
 			{
 				return BadRequest(new { Success = false, ErrorMessage = "Kullanıcı Adı Boş Olamaz" });
 			}
-			else
+
+			try
 			{
-				try
-				{
-					var user = await _context.UserData
+				var user = await _context.UserData
 					.Where(u => u.UserName == userName)
 					.AsNoTracking()
 					.Select(u => new
@@ -40,39 +39,25 @@ namespace MarketPlaceSellerApp.Controllers
 						u.UserName,
 						u.Email,
 						u.Age,
-						ProfileImageUrl = string.IsNullOrEmpty(u.ProfileImage)
+						ProfileImageBase64 = string.IsNullOrEmpty(u.ProfileImage)
 							? null
-							: $"https://bd1b-37-130-115-91.ngrok-free.app/profile_images/{u.ProfileImage}"
+							: $"https://c177-37-130-115-91.ngrok-free.app/profile_images/{u.ProfileImage}"
 					})
 					.FirstOrDefaultAsync();
 
-					if (user == null)
-					{
-						return NotFound(new
-						{
-							Success = false,
-							ErrorMessage = "Kullanıcı Bulunamadı"
-						});
-					}
-					else
-					{
-						return Ok(new
-						{
-							Success = true,
-							Data = user
-						});
-					}
-				}
-				catch (Exception ex)
+				if (user == null)
 				{
-					return StatusCode(500, new
-					{
-						Success = false,
-						ErrorMessage = ex.Message
-					});
+					return NotFound(new { Success = false, ErrorMessage = "Kullanıcı Bulunamadı" });
 				}
+
+				return Ok(new { Success = true, Data = user });
+			}
+			catch (Exception ex)
+			{
+				return StatusCode(500, new { Success = false, ErrorMessage = "Hata bir oluştu.", Details = ex.Message });
 			}
 		}
+
 
 
 

@@ -24,65 +24,66 @@ namespace MarketPlaceSellerApp.Controllers
             _webHostEnvironment = webHostEnvironment;
         }
 
-        [HttpPost("RegisterUser")]
-        public async Task<IActionResult> RegisterUser([FromForm] User model)
-        {
-            if (!ModelState.IsValid)
-                return BadRequest(new { Success = false, ErrorMessage = "Geçersiz model girdisi." });
+		[HttpPost("RegisterUser")]
+		public async Task<IActionResult> RegisterUser([FromForm] User model)
+		{
+			if (!ModelState.IsValid)
+				return BadRequest(new { Success = false, ErrorMessage = "Geçersiz model girdisi." });
 
-            if (await _context.UserData.AnyAsync(m => m.UserName == model.UserName || m.Email == model.Email))
-            {
-                var errorMessage = await _context.UserData.AnyAsync(m => m.UserName == model.UserName)
-                    ? "Kullanıcı adı zaten mevcut."
-                    : "Email adresi zaten kayıtlı.";
-                return BadRequest(new { Success = false, ErrorMessage = errorMessage });
-            }
+			if (await _context.UserData.AnyAsync(m => m.UserName == model.UserName || m.Email == model.Email))
+			{
+				var errorMessage = await _context.UserData.AnyAsync(m => m.UserName == model.UserName)
+					? "Kullanıcı adı zaten mevcut."
+					: "Email adresi zaten kayıtlı.";
+				return BadRequest(new { Success = false, ErrorMessage = errorMessage });
+			}
 
-            try
-            {
-                var hashPassword = HashingAndVerifyPassword.HashingPassword.HashPassword(model.Password);
-                var profileImagePath = model.ProfileImage != null ? await SaveProfileImageAsync(model.ProfileImage) : null;
+			try
+			{
+				var hashPassword = HashingAndVerifyPassword.HashingPassword.HashPassword(model.Password);
+				var profileImagePath = model.ProfileImage != null ? await SaveProfileImageAsync(model.ProfileImage) : null;
 
-                var user = new UserDatum
-                {
-                    FirstName = model.FirstName,
-                    LastName = model.LastName,
-                    UserName = model.UserName,
-                    Email = model.Email,
-                    Password = hashPassword,
-                    ProfileImage = profileImagePath,
-                    Age = !string.IsNullOrWhiteSpace(model.Age) ? Convert.ToDateTime(model.Age) : (DateTime?)null
-                };
+				var user = new UserDatum
+				{
+					FirstName = model.FirstName,
+					LastName = model.LastName,
+					UserName = model.UserName,
+					Email = model.Email,
+					Password = hashPassword,
+					ProfileImage = profileImagePath,
+					Age = !string.IsNullOrWhiteSpace(model.Age) ? Convert.ToDateTime(model.Age) : (DateTime?)null
+				};
 
-                _context.UserData.Add(user);
-                await _context.SaveChangesAsync();
+				_context.UserData.Add(user);
+				await _context.SaveChangesAsync();
 
-                return Ok(new { Success = true, Message = "Kullanıcı başarıyla kaydedildi." });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { Success = false, ErrorMessage = $"Sunucu hatası: {ex.Message}" });
-            }
-        }
+				return Ok(new { Success = true, Message = "Kullanıcı başarıyla kaydedildi." });
+			}
+			catch (Exception ex)
+			{
+				return StatusCode(500, new { Success = false, ErrorMessage = $"Sunucu hatası: {ex.Message}" });
+			}
+		}
 
-        private async Task<string> SaveProfileImageAsync(IFormFile profileImageBytes)
-        {
-            var fileName = $"{Guid.NewGuid():N}.jpg";
-            var filePath = Path.Combine(_webHostEnvironment.WebRootPath, "profile_images");
+		private async Task<string> SaveProfileImageAsync(IFormFile profileImage)
+		{
+			var fileName = $"{Guid.NewGuid():N}{Path.GetExtension(profileImage.FileName)}";
+			var filePath = Path.Combine(_webHostEnvironment.WebRootPath, "profile_images");
 
-            Directory.CreateDirectory(filePath);
-            var fullFilePath = Path.Combine(filePath, fileName);
+			Directory.CreateDirectory(filePath);
+			var fullFilePath = Path.Combine(filePath, fileName);
 
-            await using (var fileStream = new FileStream(fullFilePath, FileMode.Create))
-            {
-                await profileImageBytes.CopyToAsync(fileStream);
-            }
+			await using (var fileStream = new FileStream(fullFilePath, FileMode.Create))
+			{
+				await profileImage.CopyToAsync(fileStream);
+			}
 
-            return fileName;
-        }
+			return fileName;
+		}
 
 
-        [HttpPost("LoginUserData")]
+
+		[HttpPost("LoginUserData")]
         public async Task<IActionResult> LoginUserData([FromBody] LoginUser model)
         {
             if (model == null)
@@ -178,6 +179,7 @@ namespace MarketPlaceSellerApp.Controllers
         [HttpPost("ChangePassword")]
         public async Task<IActionResult> ChangePassword([FromBody] ChancePasswordModel model)
         {
+
             var user = await _context.UserData.AsNoTracking().FirstOrDefaultAsync(m => m.UserName == model.UserName);
 
             if (user == null)

@@ -128,7 +128,6 @@ namespace MarketPlaceSellerApp.Controllers
 
 				if (user != null)
 				{
-					// Sadece değişen alanları güncelleyin
 					user.FirstName = model.FirstName;
 					user.LastName = model.LastName;
 					user.Email = model.Email;
