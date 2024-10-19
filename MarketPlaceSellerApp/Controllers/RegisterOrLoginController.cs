@@ -2,6 +2,7 @@
 using MarketPlaceSellerApp.Helpers;
 using MarketPlaceSellerApp.Models;
 using MarketPlaceSellerApp.ViewModel;
+using MarketPlaceSellerApp.FileNameGuid;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Net;
@@ -9,23 +10,23 @@ using System.Net.Mail;
 
 namespace MarketPlaceSellerApp.Controllers
 {
-    [Route("[controller]")]
-    [ApiController]
-    public class RegisterAndLoginApiController : ControllerBase
-    {
-        private readonly HepsiburadaSellerInformationContext _context;
-        private readonly AuthHelpers _authHelpers;
-        private readonly IWebHostEnvironment _webHostEnvironment;
+	[Route("[controller]")]
+	[ApiController]
+	public class RegisterAndLoginApiController : ControllerBase
+	{
+		private readonly HepsiburadaSellerInformationContext _context;
+		private readonly AuthHelpers _authHelpers;
+		private readonly GuidOperation _guidOperation;
 
-        public RegisterAndLoginApiController(HepsiburadaSellerInformationContext context, AuthHelpers authHelpers, IWebHostEnvironment webHostEnvironment)
-        {
-            _context = context;
-            _authHelpers = authHelpers;
-            _webHostEnvironment = webHostEnvironment;
-        }
+		public RegisterAndLoginApiController(HepsiburadaSellerInformationContext context, AuthHelpers authHelpers, GuidOperation guidOperation)
+		{
+			_context = context;
+			_authHelpers = authHelpers;
+			_guidOperation = guidOperation;
+		}
 
 		[HttpPost("RegisterUser")]
-		public async Task<IActionResult> RegisterUser([FromForm] User model)
+		public async Task<IActionResult> RegisterUser([FromBody] User model)
 		{
 			if (!ModelState.IsValid)
 				return BadRequest(new { Success = false, ErrorMessage = "Geçersiz model girdisi." });
@@ -41,7 +42,10 @@ namespace MarketPlaceSellerApp.Controllers
 			try
 			{
 				var hashPassword = HashingAndVerifyPassword.HashingPassword.HashPassword(model.Password);
-				var profileImagePath = model.ProfileImage != null ? await SaveProfileImageAsync(model.ProfileImage) : null;
+
+				var profileImagePath = !string.IsNullOrEmpty(model.ProfileImageBase64)
+					? await _guidOperation.SaveProfileImageAsync(model.ProfileImageBase64)
+					: "profilephotots.png";
 
 				var user = new UserDatum
 				{
@@ -54,7 +58,7 @@ namespace MarketPlaceSellerApp.Controllers
 					Age = !string.IsNullOrWhiteSpace(model.Age) ? Convert.ToDateTime(model.Age) : (DateTime?)null
 				};
 
-				_context.UserData.Add(user);
+				await _context.UserData.AddAsync(user);
 				await _context.SaveChangesAsync();
 
 				return Ok(new { Success = true, Message = "Kullanıcı başarıyla kaydedildi." });
@@ -65,135 +69,113 @@ namespace MarketPlaceSellerApp.Controllers
 			}
 		}
 
-		private async Task<string> SaveProfileImageAsync(IFormFile profileImage)
+		[HttpPost("LoginUserData")]
+		public async Task<IActionResult> LoginUserData([FromBody] LoginUser model)
 		{
-			var fileName = $"{Guid.NewGuid():N}{Path.GetExtension(profileImage.FileName)}";
-			var filePath = Path.Combine(_webHostEnvironment.WebRootPath, "profile_images");
+			if (model == null)
+				return BadRequest(new { Success = false, ErrorMessage = "Boş Değer Gönderilemez" });
 
-			Directory.CreateDirectory(filePath);
-			var fullFilePath = Path.Combine(filePath, fileName);
-
-			await using (var fileStream = new FileStream(fullFilePath, FileMode.Create))
+			try
 			{
-				await profileImage.CopyToAsync(fileStream);
+				var authResult = await _authHelpers.UserAuthentication(model);
+				return authResult;
 			}
-
-			return fileName;
+			catch (Exception ex)
+			{
+				return StatusCode(500, new { Success = false, ErrorMessage = $"Sunucu hatası: {ex.Message}" });
+			}
 		}
 
+		[HttpPost("ForgetPassword")]
+		public async Task<IActionResult> ForgetPassword([FromBody] ForgetPassword model)
+		{
+			if (model == null || string.IsNullOrEmpty(model.UserName))
+				return BadRequest(new { Success = false, ErrorMessage = "Veri boş geldi" });
 
+			var existingUser = await _context.UserData.FirstOrDefaultAsync(m => m.UserName == model.UserName);
 
-		[HttpPost("LoginUserData")]
-        public async Task<IActionResult> LoginUserData([FromBody] LoginUser model)
-        {
-            if (model == null)
-                return BadRequest(new { Success = false, ErrorMessage = "Boş Değer Gönderilemez" });
+			if (existingUser == null)
+				return NotFound(new { Success = false, ErrorMessage = "Kullanıcı bulunamadı" });
 
-            try
-            {
-                var authResult = await _authHelpers.UserAuthentication(model);
-                return authResult;
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { Success = false, ErrorMessage = $"Sunucu hatası: {ex.Message}" });
-            }
-        }
+			try
+			{
+				var randomCode = new Random().Next(100000, 999999).ToString();
+				existingUser.ValidationCode = randomCode;
 
+				_context.UserData.Update(existingUser);
+				await _context.SaveChangesAsync();
 
-        [HttpPost("ForgetPassword")]
-        public async Task<IActionResult> ForgetPassword([FromBody] ForgetPassword model)
-        {
-            if (model == null || string.IsNullOrEmpty(model.UserName))
-                return BadRequest(new { Success = false, ErrorMessage = "Veri boş geldi" });
+				await SendEmailValidationCode(existingUser.Email, randomCode);
 
-            var existingUser = await _context.UserData.FirstOrDefaultAsync(m => m.UserName == model.UserName);
+				return Ok(new { Success = true, Message = "Doğrulama kodu gönderildi." });
+			}
+			catch (Exception ex)
+			{
+				return StatusCode(500, new { Success = false, ErrorMessage = $"Hata: {ex.Message}" });
+			}
+		}
 
-            if (existingUser == null)
-                return NotFound(new { Success = false, ErrorMessage = "Kullanıcı bulunamadı" });
+		private async Task SendEmailValidationCode(string email, string validationCode)
+		{
+			string subject = "Doğrulama Kodu";
+			string message = $"Doğrulama Kodunuz: {validationCode}";
 
-            try
-            {
-                var randomCode = new Random().Next(100000, 999999).ToString();
-                existingUser.ValidationCode = randomCode;
+			await SendEmail(email, subject, message);
+		}
 
-                _context.UserData.Update(existingUser);
-                await _context.SaveChangesAsync();
+		private async Task SendEmail(string email, string subject, string message)
+		{
+			string smtpServer = "smtp.gmail.com";
+			int smtpPort = 587;
+			string smtpEmail = "akdagenestaha@gmail.com";
+			string smtpPassword = Environment.GetEnvironmentVariable("aclb kead vwkg xvsm");
 
-                await SendEmailValidationCode(existingUser.Email, randomCode);
+			using (var mailMessage = new MailMessage(smtpEmail, email, subject, message))
+			{
+				using (var smtpClient = new SmtpClient(smtpServer, smtpPort))
+				{
+					smtpClient.Credentials = new NetworkCredential(smtpEmail, smtpPassword);
+					smtpClient.EnableSsl = true;
 
-                return Ok(new { Success = true, Message = "Doğrulama kodu gönderildi." });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { Success = false, ErrorMessage = $"Hata: {ex.Message}" });
-            }
-        }
+					await smtpClient.SendMailAsync(mailMessage);
+				}
+			}
+		}
 
-        private async Task SendEmailValidationCode(string email, string validationCode)
-        {
-            string subject = "Doğrulama Kodu";
-            string message = $"Doğrulama Kodunuz: {validationCode}";
+		[HttpPost("ValidateCode")]
+		public async Task<IActionResult> ValidateCode([FromBody] VerificationCodeModel model)
+		{
+			if (model == null || string.IsNullOrEmpty(model.ValidationCode))
+				return BadRequest(new { Success = false, ErrorMessage = "Veri boş veya hatalı." });
 
-            await SendEmail(email, subject, message);
-        }
+			var user = await _context.UserData.FirstOrDefaultAsync(m => m.UserName == model.UserName);
 
-        private async Task SendEmail(string email, string subject, string message)
-        {
-            string smtpServer = "smtp.gmail.com";
-            int smtpPort = 587;
-            string smtpEmail = "akdagenestaha@gmail.com";
-            string smtpPassword = "aclb kead vwkg xvsm";
+			if (user == null)
+				return NotFound(new { Success = false, ErrorMessage = "Kullanıcı bulunamadı." });
 
-            using (var mailMessage = new MailMessage(smtpEmail, email, subject, message))
-            {
-                using (var smtpClient = new SmtpClient(smtpServer, smtpPort))
-                {
-                    smtpClient.Credentials = new NetworkCredential(smtpEmail, smtpPassword);
-                    smtpClient.EnableSsl = true;
+			if (!user.ValidationCode.Equals(model.ValidationCode))
+				return BadRequest(new { Success = false, ErrorMessage = "Doğrulama kodu yanlış." });
 
-                    await smtpClient.SendMailAsync(mailMessage);
-                }
-            }
-        }
+			return Ok(new { Success = true, Message = "Doğrulama başarılı." });
+		}
 
+		[HttpPost("ChangePassword")]
+		public async Task<IActionResult> ChangePassword([FromBody] ChancePasswordModel model)
+		{
+			var user = await _context.UserData.AsNoTracking().FirstOrDefaultAsync(m => m.UserName == model.UserName);
 
-        [HttpPost("ValidateCode")]
-        public async Task<IActionResult> ValidateCode([FromBody] VerificationCodeModel model)
-        {
-            if (model == null || string.IsNullOrEmpty(model.ValidationCode))
-                return BadRequest(new { Success = false, ErrorMessage = "Veri boş veya hatalı." });
+			if (user == null)
+				return BadRequest(new { Success = false, ErrorMessage = "Kullanıcı bulunamadı" });
 
-            var user = await _context.UserData.FirstOrDefaultAsync(m => m.UserName == model.UserName);
+			if (HashingAndVerifyPassword.HashingPassword.VerifyPassword(model.Password, user.Password))
+				return BadRequest(new { Success = false, ErrorMessage = "Yeni şifre eski şifre ile aynı olamaz" });
 
-            if (user == null)
-                return NotFound(new { Success = false, ErrorMessage = "Kullanıcı bulunamadı." });
+			user.Password = HashingAndVerifyPassword.HashingPassword.HashPassword(model.Password);
 
-            if (!user.ValidationCode.Equals(model.ValidationCode))
-                return BadRequest(new { Success = false, ErrorMessage = "Doğrulama kodu yanlış." });
+			_context.UserData.Update(user);
+			await _context.SaveChangesAsync();
 
-            return Ok(new { Success = true, Message = "Doğrulama başarılı." });
-        }
-
-
-        [HttpPost("ChangePassword")]
-        public async Task<IActionResult> ChangePassword([FromBody] ChancePasswordModel model)
-        {
-
-            var user = await _context.UserData.AsNoTracking().FirstOrDefaultAsync(m => m.UserName == model.UserName);
-
-            if (user == null)
-                return BadRequest(new { Success = false, ErrorMessage = "Kullanıcı bulunamadı" });
-
-            if (HashingAndVerifyPassword.HashingPassword.VerifyPassword(model.Password, user.Password))
-                return BadRequest(new { Success = false, ErrorMessage = "Yeni şifre eski şifre ile aynı olamaz" });
-
-            user.Password = HashingAndVerifyPassword.HashingPassword.HashPassword(model.Password);
-
-            _context.UserData.Update(user);
-            await _context.SaveChangesAsync();
-
-            return Ok(new { Success = true, Message = "Şifre başarıyla güncellendi" });
-        }
-    }
+			return Ok(new { Success = true, Message = "Şifre başarıyla güncellendi" });
+		}
+	}
 }

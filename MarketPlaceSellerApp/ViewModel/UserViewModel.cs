@@ -28,7 +28,7 @@ namespace MarketPlaceSellerApp.ViewModel
 		[RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])[a-zA-Z\d]{8,}$", ErrorMessage = "En az 8 karakterlik bir parola büyük ve küçük harflerin bir kombinasyonunu içermelidir.")]
 		public string Password { get; set; }
 
-		public IFormFile ProfileImage { get; set; }
+		public string ProfileImageBase64 { get; set; }
 	}
 
 
@@ -64,7 +64,10 @@ namespace MarketPlaceSellerApp.ViewModel
         public string Email { get; set; }
 
         public DateTime? Age { get; set; }
-    }
+
+        public string ProfileImageBase64 { get; set; }
+
+	}
 
     public class UpdatePassword
     {
@@ -131,20 +134,19 @@ namespace MarketPlaceSellerApp.ViewModel
         public long Id { get; set; }
     }
 
-	public class UpdateProfilePhoto
+	public class ProfilePhotoModel
 	{
 		public string UserName { get; set; }
-		public IFormFile ProfileImage { get; set; }
+		public string NewProfileImageBase64 { get; set; }
 	}
 
-	public class ProfilePhotoApiResponse
-    {
-        public bool Success { get; set; }
-        public string ErrorMessage { get; set; }
-        public UpdateProfilePhoto Data { get; set; }
-    }
-
-    public class UserProfileDataResponse
+	public class ProfilePohotosApiResponse
+	{
+		public bool Success { get; set; }
+		public string ErrorMessage { get; set; }
+		public ProfilePhotoModel Data { get; set; }
+	}
+	public class UserProfileDataResponse
     {
         public bool Success { get; set; }
         public string ErrorMessage { get; set; }

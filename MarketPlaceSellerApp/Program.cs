@@ -1,4 +1,5 @@
 using MarketPlaceSellerApp.AuthenticationHandler;
+using MarketPlaceSellerApp.FileNameGuid;
 using MarketPlaceSellerApp.Helpers;
 using MarketPlaceSellerApp.Models;
 using Microsoft.AspNetCore.Authentication;
@@ -40,6 +41,8 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 builder.Services.AddTransient<AuthHelpers>();
+builder.Services.AddSingleton<GuidOperation>();
+
 builder.Services.AddSingleton<ISystemClock, SystemClock>();
 
 builder.Services.AddAuthentication("BasicAuthentication")

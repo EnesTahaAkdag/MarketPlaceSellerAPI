@@ -1,11 +1,10 @@
 ﻿using MarketPlaceSellerApp.HashingPassword;
 using MarketPlaceSellerApp.Models;
 using MarketPlaceSellerApp.ViewModel;
+using MarketPlaceSellerApp.FileNameGuid;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System;
 
 namespace MarketPlaceSellerApp.Controllers
 {
@@ -15,15 +14,14 @@ namespace MarketPlaceSellerApp.Controllers
 	public class UserUpdateApiController : ControllerBase
 	{
 		private readonly HepsiburadaSellerInformationContext _context;
-		private readonly IWebHostEnvironment _environment;
+		private readonly GuidOperation _guidOperation;
 
-		public UserUpdateApiController(HepsiburadaSellerInformationContext context, IWebHostEnvironment environment)
+
+		public UserUpdateApiController(HepsiburadaSellerInformationContext context,GuidOperation guidOperation)
 		{
 			_context = context;
-			_environment = environment;
+			_guidOperation = guidOperation;
 		}
-
-
 
 		[HttpPost("UpdatePassword")]
 		public async Task<IActionResult> UpdatePassword([FromBody] UpdatePassword model)
@@ -52,69 +50,65 @@ namespace MarketPlaceSellerApp.Controllers
 			}
 		}
 
-
-
-		
-
-
-
-
-
 		[HttpPost("UpdateUserProfileImage")]
-		public async Task<IActionResult> UpdateUserProfilePhoto([FromForm] UpdateProfilePhoto model)
+		public async Task<IActionResult> UpdateUserProfilePhoto([FromBody] ProfilePhotoModel model)
 		{
+			if (model == null || string.IsNullOrEmpty(model.UserName) || string.IsNullOrEmpty(model.NewProfileImageBase64))
+			{
+				return BadRequest(new
+				{
+					Success = false,
+					ErrorMessage = "Geçerli kullanıcı adı ve resim verisi sağlanmalıdır."
+				});
+			}
+
 			try
 			{
-				var user = await _context.UserData.AsNoTracking().FirstOrDefaultAsync(m => m.UserName == model.UserName);
+				var user = await _context.UserData.FirstOrDefaultAsync(m => m.UserName == model.UserName);
 
-				if (user != null)
+				if (user == null)
 				{
-					if (model.ProfileImage != null)
+					return NotFound(new
 					{
-						var fileName = $"{Guid.NewGuid().ToString("N")}.jpg";
-						var filePath = Path.Combine(_environment.ContentRootPath, "wwwroot", "profile_images", fileName);
-
-						Directory.CreateDirectory(Path.GetDirectoryName(filePath));
-
-						await using (var stream = new FileStream(filePath, FileMode.Create))
-						{
-							await model.ProfileImage.CopyToAsync(stream);
-						}
-
-						user.ProfileImage = fileName;
-						_context.Update(user);
-						await _context.SaveChangesAsync();
-
-						return Ok(new
-						{
-							Success = true,
-							Message = "Profil Resmi Başarıyla Güncellendi"
-						});
-					}
-					else
-					{
-						return BadRequest(new
-						{
-							Success = false,
-							ErrorMessage = "Geçerli bir resim dosyası yükleyin."
-						});
-					}
+						Success = false,
+						ErrorMessage = "Kullanıcı bulunamadı."
+					});
 				}
-				else
+
+				var profileImagePath = await _guidOperation.SaveProfileImageAsync(model.NewProfileImageBase64);
+
+				if (string.IsNullOrEmpty(profileImagePath))
 				{
 					return BadRequest(new
 					{
 						Success = false,
-						ErrorMessage = "Kullanıcı Bulunamadı."
+						ErrorMessage = "Resim kaydedilirken bir hata oluştu."
 					});
 				}
+				user.ProfileImage = profileImagePath;
+
+				await _context.SaveChangesAsync();
+
+				return Ok(new
+				{
+					Success = true,
+					Message = "Profil resmi başarıyla güncellendi."
+				});
+			}
+			catch (FormatException)
+			{
+				return BadRequest(new
+				{
+					Success = false,
+					ErrorMessage = "Geçersiz resim formatı."
+				});
 			}
 			catch (Exception ex)
 			{
 				return StatusCode(500, new
 				{
 					Success = false,
-					ErrorMessage = ex.Message
+					ErrorMessage = $"Bir hata oluştu: {ex.Message}"
 				});
 			}
 		}
@@ -148,6 +142,5 @@ namespace MarketPlaceSellerApp.Controllers
 				return StatusCode(500, new { Success = false, ErrorMessage = ex.Message });
 			}
 		}
-
 	}
 }
