@@ -118,7 +118,7 @@ namespace MarketPlaceSellerApp.Controllers
 		{
 			try
 			{
-				var user = await _context.UserData.AsNoTracking().FirstOrDefaultAsync(m => m.UserName == model.UserName);
+				var user = await _context.UserData.FirstOrDefaultAsync(m => m.UserName == model.UserName);
 
 				if (user != null)
 				{
@@ -127,7 +127,6 @@ namespace MarketPlaceSellerApp.Controllers
 					user.Email = model.Email;
 					user.Age = model.Age;
 
-					_context.UserData.Update(user);
 					await _context.SaveChangesAsync();
 
 					return Ok(new { Success = true, Message = "Kullanıcı Bilgileri Başarıyla Güncellendi" });

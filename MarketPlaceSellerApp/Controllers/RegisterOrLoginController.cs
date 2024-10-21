@@ -17,35 +17,59 @@ namespace MarketPlaceSellerApp.Controllers
 		private readonly HepsiburadaSellerInformationContext _context;
 		private readonly AuthHelpers _authHelpers;
 		private readonly GuidOperation _guidOperation;
+		private readonly IWebHostEnvironment _webHostEnvironment;
 
-		public RegisterAndLoginApiController(HepsiburadaSellerInformationContext context, AuthHelpers authHelpers, GuidOperation guidOperation)
+
+		public RegisterAndLoginApiController(HepsiburadaSellerInformationContext context, AuthHelpers authHelpers, GuidOperation guidOperation, IWebHostEnvironment webHostEnvironment)
 		{
 			_context = context;
 			_authHelpers = authHelpers;
 			_guidOperation = guidOperation;
+			_webHostEnvironment = webHostEnvironment;
 		}
 
 		[HttpPost("RegisterUser")]
 		public async Task<IActionResult> RegisterUser([FromBody] User model)
 		{
 			if (!ModelState.IsValid)
-				return BadRequest(new { Success = false, ErrorMessage = "Geçersiz model girdisi." });
-
-			if (await _context.UserData.AnyAsync(m => m.UserName == model.UserName || m.Email == model.Email))
 			{
-				var errorMessage = await _context.UserData.AnyAsync(m => m.UserName == model.UserName)
+				var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+				return BadRequest(new { Success = false, ErrorMessage = "Geçersiz model girdisi.", Errors = errors });
+			}
+
+			var existingUser = await _context.UserData
+				.Where(m => m.UserName == model.UserName || m.Email == model.Email)
+				.FirstOrDefaultAsync();
+
+			if (existingUser != null)
+			{
+				var errorMessage = existingUser.UserName == model.UserName
 					? "Kullanıcı adı zaten mevcut."
 					: "Email adresi zaten kayıtlı.";
 				return BadRequest(new { Success = false, ErrorMessage = errorMessage });
 			}
 
+			string profileImagePath = string.Empty;
+
 			try
 			{
 				var hashPassword = HashingAndVerifyPassword.HashingPassword.HashPassword(model.Password);
 
-				var profileImagePath = !string.IsNullOrEmpty(model.ProfileImageBase64)
-					? await _guidOperation.SaveProfileImageAsync(model.ProfileImageBase64)
-					: "profilephotots.png";
+				if (!string.IsNullOrEmpty(model.ProfileImageBase64) && model.ProfileImageBase64 != "profilephotots.png")
+				{
+					try
+					{
+						profileImagePath = await _guidOperation.SaveProfileImageAsync(model.ProfileImageBase64);
+					}
+					catch (InvalidOperationException ex)
+					{
+						return BadRequest(new { Success = false, ErrorMessage = $"Profil resmi kaydedilemedi: {ex.Message}" });
+					}
+				}
+				else
+				{
+					profileImagePath = null;
+				}
 
 				var user = new UserDatum
 				{
@@ -57,17 +81,27 @@ namespace MarketPlaceSellerApp.Controllers
 					ProfileImage = profileImagePath,
 					Age = !string.IsNullOrWhiteSpace(model.Age) ? Convert.ToDateTime(model.Age) : (DateTime?)null
 				};
-
-				await _context.UserData.AddAsync(user);
+				await _context.AddAsync(user);
 				await _context.SaveChangesAsync();
 
 				return Ok(new { Success = true, Message = "Kullanıcı başarıyla kaydedildi." });
 			}
 			catch (Exception ex)
 			{
+				if (!string.IsNullOrEmpty(profileImagePath) && profileImagePath != "profilephotots.png")
+				{
+					var fullFilePath = Path.Combine(_webHostEnvironment.WebRootPath, "profile_images", profileImagePath);
+					if (System.IO.File.Exists(fullFilePath))
+					{
+						System.IO.File.Delete(fullFilePath);
+					}
+				}
+
 				return StatusCode(500, new { Success = false, ErrorMessage = $"Sunucu hatası: {ex.Message}" });
 			}
 		}
+
+
 
 		[HttpPost("LoginUserData")]
 		public async Task<IActionResult> LoginUserData([FromBody] LoginUser model)
