@@ -41,7 +41,7 @@ namespace MarketPlaceSellerApp.Controllers
 						u.Age,
 						ProfileImageBase64 = string.IsNullOrEmpty(u.ProfileImage)
 							? null
-							: $"https://de29-37-130-115-91.ngrok-free.app/profile_images/{u.ProfileImage}"
+							: $"https://45f9-37-130-115-91.ngrok-free.app/profile_images/{u.ProfileImage}"
 					})
 					.FirstOrDefaultAsync();
 
