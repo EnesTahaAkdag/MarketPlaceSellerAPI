@@ -44,7 +44,7 @@ namespace MarketPlaceSellerApp.ViewModel
         public string Password { get; set; }
     }
 
-    public class UpdateUser
+    public class UpdateUserData
     {
         [StringLength(50, ErrorMessage = "50 karakterden fazla giriş yapılamaz.")]
         [Required(ErrorMessage = "İsim boş bırakılamaz.")]
@@ -84,7 +84,6 @@ namespace MarketPlaceSellerApp.ViewModel
 	public class VerificationCodeModel
 	{
         public string UserName { get; set; }
-
 		public string ValidationCode { get; set; }
 	}
 
@@ -165,6 +164,12 @@ namespace MarketPlaceSellerApp.ViewModel
     {
         public bool Success { get; set; }
         public string ErrorMessage { get; set; }
-        public List<UpdateUser> Data { get; set; }
+        public List<UpdateUserData> Data { get; set; }
     }
+	public class ProfileUpdateApiResponse
+	{
+		public bool Success { get; set; }
+		public string ErrorMessage { get; set; }
+		public UpdateUserData Data { get; set; }
+	}
 }

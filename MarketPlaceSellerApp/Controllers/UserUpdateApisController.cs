@@ -17,7 +17,7 @@ namespace MarketPlaceSellerApp.Controllers
 		private readonly GuidOperation _guidOperation;
 
 
-		public UserUpdateApiController(HepsiburadaSellerInformationContext context,GuidOperation guidOperation)
+		public UserUpdateApiController(HepsiburadaSellerInformationContext context, GuidOperation guidOperation)
 		{
 			_context = context;
 			_guidOperation = guidOperation;
@@ -49,7 +49,6 @@ namespace MarketPlaceSellerApp.Controllers
 				return StatusCode(500, new { Success = false, ErrorMessage = ex.Message });
 			}
 		}
-
 		[HttpPost("UpdateUserProfileImage")]
 		public async Task<IActionResult> UpdateUserProfilePhoto([FromBody] ProfilePhotoModel model)
 		{
@@ -65,7 +64,6 @@ namespace MarketPlaceSellerApp.Controllers
 			try
 			{
 				var user = await _context.UserData.FirstOrDefaultAsync(m => m.UserName == model.UserName);
-
 				if (user == null)
 				{
 					return NotFound(new
@@ -76,7 +74,6 @@ namespace MarketPlaceSellerApp.Controllers
 				}
 
 				var profileImagePath = await _guidOperation.SaveProfileImageAsync(model.NewProfileImageBase64);
-
 				if (string.IsNullOrEmpty(profileImagePath))
 				{
 					return BadRequest(new
@@ -85,14 +82,27 @@ namespace MarketPlaceSellerApp.Controllers
 						ErrorMessage = "Resim kaydedilirken bir hata oluştu."
 					});
 				}
-				user.ProfileImage = profileImagePath;
 
+				user.ProfileImage = profileImagePath;
 				await _context.SaveChangesAsync();
 
-				return Ok(new
+				var data = await _context.UserData
+					.Where(u => u.UserName == model.UserName)
+					.Select(u => new ProfilePhotoModel
+					{
+						UserName = u.UserName,
+						NewProfileImageBase64 = string.IsNullOrEmpty(u.ProfileImage)
+						? null
+						: $"https://8957-37-130-115-91.ngrok-free.app/profile_images/{u.ProfileImage}"
+					})
+					.FirstOrDefaultAsync();
+
+
+				return Ok(new ProfilePohotosApiResponse
 				{
 					Success = true,
-					Message = "Profil resmi başarıyla güncellendi."
+					ErrorMessage = "Profil resmi başarıyla güncellendi.",
+					Data = data
 				});
 			}
 			catch (FormatException)
@@ -113,8 +123,9 @@ namespace MarketPlaceSellerApp.Controllers
 			}
 		}
 
+
 		[HttpPost("EditUserData")]
-		public async Task<IActionResult> UpdateUserData([FromBody] UpdateUser model)
+		public async Task<IActionResult> UpdateUserData([FromBody] UpdateUserData model)
 		{
 			try
 			{
@@ -129,7 +140,27 @@ namespace MarketPlaceSellerApp.Controllers
 
 					await _context.SaveChangesAsync();
 
-					return Ok(new { Success = true, Message = "Kullanıcı Bilgileri Başarıyla Güncellendi" });
+					var data = await _context.UserData
+						.Where(u => u.UserName == model.UserName)
+						.Select(u => new UpdateUserData
+						{
+							FirstName = u.FirstName,
+							LastName = u.LastName,
+							UserName = u.UserName,
+							Email = u.Email,
+							Age = u.Age.Value,
+							ProfileImageBase64 = string.IsNullOrEmpty(u.ProfileImage)
+								? null
+								: $"https://8957-37-130-115-91.ngrok-free.app/profile_images/{u.ProfileImage}"
+						})
+						.FirstOrDefaultAsync();
+
+					return Ok(new ProfileUpdateApiResponse
+					{
+						Success = true,
+						ErrorMessage = "Kullanıcı Bilgileri Başarıyla Güncellendi",
+						Data = data
+					});
 				}
 				else
 				{

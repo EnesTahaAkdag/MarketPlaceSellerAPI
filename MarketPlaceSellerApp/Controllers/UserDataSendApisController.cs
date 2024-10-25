@@ -41,7 +41,7 @@ namespace MarketPlaceSellerApp.Controllers
 						u.Age,
 						ProfileImageBase64 = string.IsNullOrEmpty(u.ProfileImage)
 							? null
-							: $"https://45f9-37-130-115-91.ngrok-free.app/profile_images/{u.ProfileImage}"
+							: $"https://8957-37-130-115-91.ngrok-free.app/profile_images/{u.ProfileImage}"
 					})
 					.FirstOrDefaultAsync();
 
@@ -77,7 +77,7 @@ namespace MarketPlaceSellerApp.Controllers
 									  FirstName = c.FirstName,
 									  LastName = c.LastName,
 									  UserName = c.UserName,
-									  Age = c.Age.GetValueOrDefault().ToString("yyyy-MM-dd HH:mm"),
+									  Age = c.Age.GetValueOrDefault().ToString("yyyy-MM-dd"),
 								  })
 								  .Take(count)
 								  .AsNoTracking()
