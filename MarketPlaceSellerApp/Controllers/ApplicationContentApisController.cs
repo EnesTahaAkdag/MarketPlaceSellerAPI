@@ -1,7 +1,6 @@
 ﻿using MarketPlaceSellerApp.Models;
 using MarketPlaceSellerApp.ViewModel;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -77,7 +76,7 @@ namespace MarketPlaceSellerApp.Controllers
 				int totalCount = await _context.SellerInformations.CountAsync();
 				var data = await (from c in _context.SellerInformations
 								  orderby c.Id
-								  select new SellerRaitingChartViewModel
+								  select new SellerRatingChartViewModel
 								  {
 									  StoreName = c.StoreName,
 									  RatingScore = c.RatingScore,
@@ -98,7 +97,7 @@ namespace MarketPlaceSellerApp.Controllers
 			}
 			catch (Exception ex)
 			{
-				var response = new ApiResponse
+				var response = new ApiResponses
 				{
 					Success = false,
 					ErrorMessage = ex.Message

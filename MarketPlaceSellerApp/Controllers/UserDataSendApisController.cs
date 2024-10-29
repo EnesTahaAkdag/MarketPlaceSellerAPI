@@ -41,7 +41,7 @@ namespace MarketPlaceSellerApp.Controllers
 						u.Age,
 						ProfileImageBase64 = string.IsNullOrEmpty(u.ProfileImage)
 							? null
-							: $"https://8957-37-130-115-91.ngrok-free.app/profile_images/{u.ProfileImage}"
+							: $"https://f51b-37-130-115-91.ngrok-free.app/profile_images/{u.ProfileImage}"
 					})
 					.FirstOrDefaultAsync();
 
@@ -62,12 +62,15 @@ namespace MarketPlaceSellerApp.Controllers
 
 
 		[HttpGet("UserList")]
-		public async Task<ActionResult> UserList()
+		public async Task<ActionResult> UserList(int? page,int? pageSize)
 		{
 			try
 			{
-				int count = _context.UserData.Count();
 				int totalCount = await _context.UserData.CountAsync();
+				int currentPage = page ?? 1;
+				pageSize = pageSize ?? 1;
+				int totalPage = (int)Math.Ceiling((decimal)totalCount / pageSize.GetValueOrDefault());
+
 				var data = await (from c in _context.UserData
 								  orderby c.Id
 								  select new UserList
@@ -79,7 +82,8 @@ namespace MarketPlaceSellerApp.Controllers
 									  UserName = c.UserName,
 									  Age = c.Age.GetValueOrDefault().ToString("yyyy-MM-dd"),
 								  })
-								  .Take(count)
+								  .Skip((currentPage - 1)* pageSize.GetValueOrDefault())
+								  .Take(pageSize.GetValueOrDefault())
 								  .AsNoTracking()
 								  .ToListAsync();
 				var response = new UserApiResponse
@@ -91,7 +95,16 @@ namespace MarketPlaceSellerApp.Controllers
 				};
 				var json = JsonConvert.SerializeObject(response, new JsonSerializerSettings() { DateFormatString = "dd-MM-yyyy" });
 
-				return Content(json, "application/json");
+				return Ok(new ApiResponse
+				{
+					Success = true,
+					ErrorMessage = null,
+					Data = data,
+					Page =currentPage,
+					PageSize = pageSize.GetValueOrDefault(),
+					TotalCount = totalCount,
+					TotalPage=totalPage
+				});
 			}
 			catch (Exception ex)
 			{
