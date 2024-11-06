@@ -63,8 +63,11 @@ namespace MarketPlaceSellerApp.Controllers
 					user.LastName = model.LastName;
 					user.Email = model.Email;
 					user.Age = model.Age;
-					var profileImagePath = await _guidOperation.SaveProfileImageAsync(model.ProfileImageBase64);
-					user.ProfileImage = profileImagePath;
+					if (!string.IsNullOrWhiteSpace(model.ProfileImageBase64) && !model.ProfileImageBase64.StartsWith("http",StringComparison.OrdinalIgnoreCase))
+					{
+						var profileImagePath = await _guidOperation.SaveProfileImageAsync(model.ProfileImageBase64);
+						user.ProfileImage = profileImagePath;
+					}
 
 					await _context.SaveChangesAsync();
 
@@ -79,7 +82,7 @@ namespace MarketPlaceSellerApp.Controllers
 							Age = u.Age.Value,
 							ProfileImageBase64 = string.IsNullOrEmpty(u.ProfileImage)
 								? null
-								: $"https://f51b-37-130-115-91.ngrok-free.app/profile_images/{u.ProfileImage}"
+								: $"https://35ea-37-130-115-91.ngrok-free.app/profile_images/{u.ProfileImage}"
 						})
 						.FirstOrDefaultAsync();
 

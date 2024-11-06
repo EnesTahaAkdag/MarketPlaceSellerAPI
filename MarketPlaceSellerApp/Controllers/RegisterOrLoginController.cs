@@ -162,7 +162,7 @@ namespace MarketPlaceSellerApp.Controllers
 			string smtpServer = "smtp.gmail.com";
 			int smtpPort = 587;
 			string smtpEmail = "akdagenestaha@gmail.com";
-			string smtpPassword = Environment.GetEnvironmentVariable("aclb kead vwkg xvsm");
+			string smtpPassword = "xvyv xlfn hpqu rbko";
 
 			using (var mailMessage = new MailMessage(smtpEmail, email, subject, message))
 			{
@@ -171,10 +171,19 @@ namespace MarketPlaceSellerApp.Controllers
 					smtpClient.Credentials = new NetworkCredential(smtpEmail, smtpPassword);
 					smtpClient.EnableSsl = true;
 
-					await smtpClient.SendMailAsync(mailMessage);
+					try
+					{
+						await smtpClient.SendMailAsync(mailMessage);
+					}
+					catch (Exception ex)
+					{
+						Console.WriteLine("Error sending email: " + ex.Message);
+						throw;
+					}
 				}
 			}
 		}
+
 
 		[HttpPost("ValidateCode")]
 		public async Task<IActionResult> ValidateCode([FromBody] VerificationCodeModel model)

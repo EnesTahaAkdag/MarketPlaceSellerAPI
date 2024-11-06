@@ -6,9 +6,6 @@ namespace MarketPlaceSellerApp.ViewModel
 		public long Id { get; set; }
 		public string StoreName { get; set; }
 		public string Telephone { get; set; }
-		public string Email { get; set; }
-		public string Address { get; set; }
-		public string SellerName { get; set; }
 	}
 	public class ApiResponse
 	{

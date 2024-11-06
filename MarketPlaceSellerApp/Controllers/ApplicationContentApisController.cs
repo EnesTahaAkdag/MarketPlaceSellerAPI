@@ -3,6 +3,7 @@ using MarketPlaceSellerApp.ViewModel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Diagnostics.Contracts;
 
 namespace MarketPlaceSellerApp.Controllers
 {
@@ -34,9 +35,6 @@ namespace MarketPlaceSellerApp.Controllers
 									  Id = c.Id,
 									  StoreName = c.StoreName,
 									  Telephone = c.Telephone,
-									  Email = c.Email,
-									  Address = c.Address,
-									  SellerName = c.SellerName
 								  })
 				  .Skip((currentPage - 1) * pageSize.GetValueOrDefault())
 				  .Take(pageSize.GetValueOrDefault())
@@ -61,6 +59,61 @@ namespace MarketPlaceSellerApp.Controllers
 				{
 					Success = false,
 					ErrorMessage = ex.Message,
+				});
+			}
+		}
+
+
+		[HttpGet("StoreDetails")]
+		public async Task<IActionResult> StoreDetails(long Id)
+		{
+			if (Id == 0)
+			{
+				return BadRequest(new StoreDetailsApiResponse
+				{
+					Success = false,
+					ErrorMessage = "Mağaza Id'si gelmediği için işlem yapılamadı"
+				});
+			}
+
+			try
+			{
+				var storeDetails = await (from c in _context.SellerInformations
+										  where c.Id == Id
+										  select new StoreDetailsViewModel
+										  {
+											  Id = c.Id,
+											  StoreName = c.StoreName,
+											  SellerName = c.SellerName,
+											  Telephone = c.Telephone,
+											  Email = c.Email,
+											  Address = c.Address,
+											  Link = c.Link
+										  })
+					.FirstOrDefaultAsync();
+
+				if (storeDetails == null)
+				{
+					return NotFound(new StoreDetailsApiResponse
+					{
+						Success = false,
+						ErrorMessage = "Belirtilen mağaza bulunamadı."
+					});
+				}
+
+				return Ok(new StoreDetailsApiResponse
+				{
+					Success = true,
+					ErrorMessage = null,
+					Data = storeDetails
+				});
+			}
+			catch (Exception ex)
+			{
+				return BadRequest(new StoreDetailsApiResponse
+				{
+					Success = false,
+					ErrorMessage = $"Sunucu hatası: {ex.Message}"
 				});
 			}
 		}
