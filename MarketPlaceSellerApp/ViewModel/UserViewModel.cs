@@ -25,7 +25,9 @@ namespace MarketPlaceSellerApp.ViewModel
 
 		[DataType(DataType.Password)]
 		[Required(ErrorMessage = "Lütfen şifre giriniz.")]
-		[RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])[a-zA-Z\d]{8,}$", ErrorMessage = "En az 8 karakterlik bir parola büyük ve küçük harflerin bir kombinasyonunu içermelidir.")]
+		[RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d])[A-Za-z\d\S]{8,}$",
+		   ErrorMessage = "En az 8 karakterlik bir parola, büyük ve küçük harf, rakam ve özel karakter içermelidir.")]
+
 		public string Password { get; set; }
 
 		public string ProfileImageBase64 { get; set; }
@@ -40,8 +42,10 @@ namespace MarketPlaceSellerApp.ViewModel
 
         [DataType(DataType.Password)]
         [Required(ErrorMessage = "Lütfen şifre giriniz.")]
-        [RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])[a-zA-Z\d]{8,}$", ErrorMessage = "En az 8 karakterlik bir parola büyük ve küçük harflerin bir kombinasyonunu içermelidir.")]
-        public string Password { get; set; }
+		[RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d])[A-Za-z\d\S]{8,}$",
+		   ErrorMessage = "En az 8 karakterlik bir parola, büyük ve küçük harf, rakam ve özel karakter içermelidir.")]
+
+		public string Password { get; set; }
     }
 
     public class UpdateUserData
@@ -77,8 +81,10 @@ namespace MarketPlaceSellerApp.ViewModel
 
         [DataType(DataType.Password)]
         [Required(ErrorMessage = "Lütfen şifre giriniz.")]
-        [RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])[a-zA-Z\d]{8,}$", ErrorMessage = "En az 8 karakterlik bir parola büyük ve küçük harflerin bir kombinasyonunu içermelidir.")]
-        public string Password { get; set; }
+		[RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d])[A-Za-z\d\S]{8,}$",
+		   ErrorMessage = "En az 8 karakterlik bir parola, büyük ve küçük harf, rakam ve özel karakter içermelidir.")]
+
+		public string Password { get; set; }
     }
 
 	public class VerificationCodeModel
