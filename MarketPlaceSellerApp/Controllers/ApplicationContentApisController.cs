@@ -3,7 +3,6 @@ using MarketPlaceSellerApp.ViewModel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Diagnostics.Contracts;
 
 namespace MarketPlaceSellerApp.Controllers
 {
@@ -36,11 +35,10 @@ namespace MarketPlaceSellerApp.Controllers
 									  StoreName = c.StoreName,
 									  Telephone = c.Telephone,
 								  })
-				  .Skip((currentPage - 1) * pageSize.GetValueOrDefault())
-				  .Take(pageSize.GetValueOrDefault())
-				  .AsNoTracking()
-				  .ToListAsync();
-
+								  .Skip((currentPage - 1) * pageSize.GetValueOrDefault())
+								  .Take(pageSize.GetValueOrDefault())
+								  .AsNoTracking()
+								  .ToListAsync();
 
 				return Ok(new ApiResponse
 				{
@@ -125,27 +123,39 @@ namespace MarketPlaceSellerApp.Controllers
 		{
 			try
 			{
-				int count = _context.SellerInformations.Count();
 				int totalCount = await _context.SellerInformations.CountAsync();
-				var data = await (from c in _context.SellerInformations
-								  orderby c.Id
-								  select new SellerRatingChartViewModel
-								  {
-									  StoreName = c.StoreName,
-									  RatingScore = c.RatingScore,
-								  })
-								  .Take(count)
-								  .AsNoTracking()
-								  .ToListAsync();
+
+				if (totalCount == 0)
+				{
+					return Ok(new ApiResponses
+					{
+						Success = true,
+						ErrorMessage = null,
+						Data = new List<SellerRatingChartViewModel>(),
+						Count = 0,
+						TotalCount = 0
+					});
+				}
+
+				var data = await _context.SellerInformations
+					.OrderBy(c => c.Id)
+					.Select(c => new SellerRatingChartViewModel
+					{
+						StoreName = c.StoreName,
+						RatingScore = c.RatingScore
+					})
+					.AsNoTracking()
+					.ToListAsync();
 
 				var response = new ApiResponses
 				{
 					Success = true,
 					ErrorMessage = null,
 					Data = data,
-					Count = count,
+					Count = data.Count,
 					TotalCount = totalCount
 				};
+
 				return Ok(response);
 			}
 			catch (Exception ex)
@@ -153,11 +163,14 @@ namespace MarketPlaceSellerApp.Controllers
 				var response = new ApiResponses
 				{
 					Success = false,
-					ErrorMessage = ex.Message
+					ErrorMessage = "Sunucu hatası: Lütfen daha sonra tekrar deneyin."
 				};
 
-				return BadRequest(response);
+				Console.Error.WriteLine($"Hata: {ex.Message}");
+
+				return StatusCode(500, response);
 			}
 		}
+
 	}
 }

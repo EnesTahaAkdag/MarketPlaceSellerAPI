@@ -8,7 +8,7 @@ namespace MarketPlaceSellerApp.Helpers
 {
 	public class AuthHelpers
 	{
-		public readonly HepsiburadaSellerInformationContext _context;
+		private readonly HepsiburadaSellerInformationContext _context;
 
 		public AuthHelpers(HepsiburadaSellerInformationContext context)
 		{
@@ -17,26 +17,39 @@ namespace MarketPlaceSellerApp.Helpers
 
 		public async Task<IActionResult> UserAuthentication(LoginUser model)
 		{
-			var dataCheck = await _context.UserData
+			if (model == null)
+			{
+				return new BadRequestObjectResult(new { Success = false, Message = "Giriş bilgileri boş olamaz." });
+			}
+
+			if (string.IsNullOrWhiteSpace(model.UserName) || string.IsNullOrWhiteSpace(model.Password))
+			{
+				return new BadRequestObjectResult(new { Success = false, Message = "Kullanıcı adı ve parola boş olamaz." });
+			}
+
+			try
+			{
+				var dataCheck = await _context.UserData
 					.AsNoTracking()
 					.FirstOrDefaultAsync(m => m.UserName == model.UserName);
 
-			if (dataCheck != null)
-			{
+				if (dataCheck == null)
+				{
+					return new UnauthorizedObjectResult(new { Success = false, Message = "Kullanıcı bulunamadı." });
+				}
+
 				bool isPasswordValid = HashingAndVerifyPassword.HashingPassword.VerifyPassword(model.Password, dataCheck.Password);
 
-				if (isPasswordValid)
+				if (!isPasswordValid)
 				{
-					return new OkObjectResult(new { Success = true, Message = "Kullanıcı Girişi Başarılı" });
+					return new UnauthorizedObjectResult(new { Success = false, Message = "Kullanıcı adı veya parola hatalı!" });
 				}
-				else
-				{
-					return new UnauthorizedObjectResult(new { Success = false, Message = "Kullanıcı Girişi Başarısız" });
-				}
+
+				return new OkObjectResult(new { Success = true, Message = "Kullanıcı girişi başarılı." });
 			}
-			else
+			catch (Exception ex)
 			{
-				return new UnauthorizedObjectResult(new { Success = false, Message = "Kullanıcı Bulunamadı" });
+				return new ObjectResult(new { Success = false, Message = $"Bir hata oluştu: {ex.Message}" }) { StatusCode = 500 };
 			}
 		}
 	}

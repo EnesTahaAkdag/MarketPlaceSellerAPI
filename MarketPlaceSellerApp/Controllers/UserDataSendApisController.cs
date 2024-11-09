@@ -18,13 +18,12 @@ namespace MarketPlaceSellerApp.Controllers
 		{
 			_context = context;
 		}
-
 		[HttpGet("DataSend")]
 		public async Task<IActionResult> DataSend(string userName)
 		{
 			if (string.IsNullOrEmpty(userName))
 			{
-				return BadRequest(new { Success = false, ErrorMessage = "Kullanıcı Adı Boş Olamaz" });
+				return BadRequest(new { Success = false, ErrorMessage = "Kullanıcı adı zorunludur. Lütfen kullanıcı adı alanını doldurunuz." });
 			}
 
 			try
@@ -41,34 +40,35 @@ namespace MarketPlaceSellerApp.Controllers
 						u.Age,
 						ProfileImageBase64 = string.IsNullOrEmpty(u.ProfileImage)
 							? null
-							: $"https://be65-37-130-115-91.ngrok-free.app/profile_images/{u.ProfileImage}"
+							: $"https://5bec-37-130-115-91.ngrok-free.app/profile_images/{u.ProfileImage}"
 					})
 					.FirstOrDefaultAsync();
 
 				if (user == null)
 				{
-					return NotFound(new { Success = false, ErrorMessage = "Kullanıcı Bulunamadı" });
+					return NotFound(new { Success = false, ErrorMessage = "Kullanıcı bulunamadı." });
 				}
 
 				return Ok(new { Success = true, Data = user });
 			}
 			catch (Exception ex)
 			{
-				return StatusCode(500, new { Success = false, ErrorMessage = "Hata bir oluştu.", Details = ex.Message });
+				return StatusCode(500, new { Success = false, ErrorMessage = "Sunucu ile iletişimde bir sorun oluştu. Lütfen tekrar deneyin.", Details = ex.Message });
 			}
 		}
 
 
 
 
+
 		[HttpGet("UserList")]
-		public async Task<ActionResult> UserList(int? page,int? pageSize)
+		public async Task<ActionResult> UserList(int? page, int? pageSize)
 		{
 			try
 			{
 				int totalCount = await _context.UserData.CountAsync();
 				int currentPage = page ?? 1;
-				pageSize = pageSize ?? 1;
+				pageSize = pageSize ?? 50;
 				int totalPage = (int)Math.Ceiling((decimal)totalCount / pageSize.GetValueOrDefault());
 
 				var data = await (from c in _context.UserData
@@ -80,40 +80,31 @@ namespace MarketPlaceSellerApp.Controllers
 									  FirstName = c.FirstName,
 									  LastName = c.LastName,
 									  UserName = c.UserName,
-									  Age = c.Age.GetValueOrDefault().ToString("yyyy-MM-dd"),
+									  Age = c.Age.HasValue ? c.Age.Value.ToString("yyyy-MM-dd") : string.Empty
 								  })
-								  .Skip((currentPage - 1)* pageSize.GetValueOrDefault())
+								  .Skip((currentPage - 1) * pageSize.GetValueOrDefault())
 								  .Take(pageSize.GetValueOrDefault())
 								  .AsNoTracking()
 								  .ToListAsync();
-				var response = new UserApiResponse
-				{
-					Success = true,
-					ErrorMessage = null,
-					Data = data,
-					TotalCount = totalCount
-				};
-				var json = JsonConvert.SerializeObject(response, new JsonSerializerSettings() { DateFormatString = "dd-MM-yyyy" });
 
 				return Ok(new ApiResponse
 				{
 					Success = true,
 					ErrorMessage = null,
 					Data = data,
-					Page =currentPage,
+					Page = currentPage,
 					PageSize = pageSize.GetValueOrDefault(),
 					TotalCount = totalCount,
-					TotalPage=totalPage
+					TotalPage = totalPage
 				});
 			}
 			catch (Exception ex)
 			{
-				var response = new UserApiResponse
+				return BadRequest(new ApiResponse
 				{
 					Success = false,
-					ErrorMessage = ex.Message,
-				};
-				return BadRequest(response);
+					ErrorMessage = ex.Message
+				});
 			}
 		}
 	}

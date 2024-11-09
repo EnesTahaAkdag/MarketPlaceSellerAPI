@@ -19,7 +19,6 @@ namespace MarketPlaceSellerApp.Controllers
 		private readonly GuidOperation _guidOperation;
 		private readonly IWebHostEnvironment _webHostEnvironment;
 
-
 		public RegisterAndLoginApiController(HepsiburadaSellerInformationContext context, AuthHelpers authHelpers, GuidOperation guidOperation, IWebHostEnvironment webHostEnvironment)
 		{
 			_context = context;
@@ -38,6 +37,7 @@ namespace MarketPlaceSellerApp.Controllers
 			}
 
 			var existingUser = await _context.UserData
+				.AsNoTracking()
 				.Where(m => m.UserName == model.UserName || m.Email == model.Email)
 				.FirstOrDefaultAsync();
 
@@ -101,13 +101,13 @@ namespace MarketPlaceSellerApp.Controllers
 			}
 		}
 
-
-
 		[HttpPost("LoginUserData")]
 		public async Task<IActionResult> LoginUserData([FromBody] LoginUser model)
 		{
-			if (model == null)
-				return BadRequest(new { Success = false, ErrorMessage = "Boş Değer Gönderilemez" });
+			if (model == null || string.IsNullOrWhiteSpace(model.UserName) || string.IsNullOrWhiteSpace(model.Password))
+			{
+				return BadRequest(new { Success = false, ErrorMessage = "Kullanıcı adı ve parola boş olamaz." });
+			}
 
 			try
 			{
@@ -116,7 +116,7 @@ namespace MarketPlaceSellerApp.Controllers
 			}
 			catch (Exception ex)
 			{
-				return StatusCode(500, new { Success = false, ErrorMessage = $"Sunucu hatası: {ex.Message}" });
+				return StatusCode(500, new { Success = false, ErrorMessage = $"Sunucu hatası oluştu: {ex.Message}" });
 			}
 		}
 
@@ -124,12 +124,12 @@ namespace MarketPlaceSellerApp.Controllers
 		public async Task<IActionResult> ForgetPassword([FromBody] ForgetPassword model)
 		{
 			if (model == null || string.IsNullOrEmpty(model.UserName))
-				return BadRequest(new { Success = false, ErrorMessage = "Veri boş geldi" });
+				return BadRequest(new { Success = false, ErrorMessage = "Kullanıcı adı sağlanmalıdır." });
 
-			var existingUser = await _context.UserData.FirstOrDefaultAsync(m => m.UserName == model.UserName);
+			var existingUser = await _context.UserData.AsNoTracking().FirstOrDefaultAsync(m => m.UserName == model.UserName);
 
 			if (existingUser == null)
-				return NotFound(new { Success = false, ErrorMessage = "Kullanıcı bulunamadı" });
+				return NotFound(new { Success = false, ErrorMessage = "Kullanıcı bulunamadı." });
 
 			try
 			{
@@ -184,14 +184,13 @@ namespace MarketPlaceSellerApp.Controllers
 			}
 		}
 
-
 		[HttpPost("ValidateCode")]
 		public async Task<IActionResult> ValidateCode([FromBody] VerificationCodeModel model)
 		{
 			if (model == null || string.IsNullOrEmpty(model.ValidationCode))
-				return BadRequest(new { Success = false, ErrorMessage = "Veri boş veya hatalı." });
+				return BadRequest(new { Success = false, ErrorMessage = "Doğrulama kodu boş veya hatalı." });
 
-			var user = await _context.UserData.FirstOrDefaultAsync(m => m.UserName == model.UserName);
+			var user = await _context.UserData.AsNoTracking().FirstOrDefaultAsync(m => m.UserName == model.UserName);
 
 			if (user == null)
 				return NotFound(new { Success = false, ErrorMessage = "Kullanıcı bulunamadı." });
@@ -202,23 +201,28 @@ namespace MarketPlaceSellerApp.Controllers
 			return Ok(new { Success = true, Message = "Doğrulama başarılı." });
 		}
 
+
+
 		[HttpPost("ChangePassword")]
 		public async Task<IActionResult> ChangePassword([FromBody] ChancePasswordModel model)
 		{
+			if (model == null || string.IsNullOrEmpty(model.UserName) || string.IsNullOrEmpty(model.Password))
+				return BadRequest(new { Success = false, ErrorMessage = "Kullanıcı adı ve yeni şifre boş olamaz." });
+
 			var user = await _context.UserData.AsNoTracking().FirstOrDefaultAsync(m => m.UserName == model.UserName);
 
 			if (user == null)
-				return BadRequest(new { Success = false, ErrorMessage = "Kullanıcı bulunamadı" });
+				return NotFound(new { Success = false, ErrorMessage = "Kullanıcı bulunamadı." });
 
 			if (HashingAndVerifyPassword.HashingPassword.VerifyPassword(model.Password, user.Password))
-				return BadRequest(new { Success = false, ErrorMessage = "Yeni şifre eski şifre ile aynı olamaz" });
+				return BadRequest(new { Success = false, ErrorMessage = "Yeni şifre eski şifre ile aynı olamaz." });
 
 			user.Password = HashingAndVerifyPassword.HashingPassword.HashPassword(model.Password);
 
 			_context.UserData.Update(user);
 			await _context.SaveChangesAsync();
 
-			return Ok(new { Success = true, Message = "Şifre başarıyla güncellendi" });
+			return Ok(new { Success = true, Message = "Şifre başarıyla güncellendi." });
 		}
 	}
 }
