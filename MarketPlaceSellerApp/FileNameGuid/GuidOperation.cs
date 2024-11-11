@@ -16,7 +16,7 @@
 				byte[] imageBytes = Convert.FromBase64String(profileImageBase64);
 				var fileName = $"{Guid.NewGuid():N}.png";
 				var filePath = Path.Combine(_webHostEnvironment.WebRootPath ?? _webHostEnvironment.ContentRootPath, "profile_images");
-				
+
 				if (!Directory.Exists(filePath))
 					Directory.CreateDirectory(filePath);
 
@@ -26,9 +26,8 @@
 			}
 			catch (Exception ex)
 			{
-				throw new InvalidOperationException("Profil resmi kaydedilemedi.", ex);
+				throw new InvalidOperationException("Profil resmi kaydedilemedi. Lütfen geçerli bir resim dosyası sağlayın veya tekrar deneyin.", ex);
 			}
 		}
 	}
-
 }

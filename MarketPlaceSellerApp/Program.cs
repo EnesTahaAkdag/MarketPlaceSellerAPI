@@ -50,7 +50,7 @@ builder.Services.AddAuthentication("BasicAuthentication")
 
 builder.Services.AddDbContext<HepsiburadaSellerInformationContext>(context =>
 {
-	context.UseSqlServer(@"Data Source=DESKTOP-PJ1E5QV;Initial Catalog=Hepsiburada-Seller-Information;Persist Security Info=True;Trusted_Connection=True;TrustServerCertificate=Yes;");
+	context.UseSqlServer(@"Data Source=PRASOFT\SQLEXPRESS;Initial Catalog=Hepsiburada-Seller-Information;Persist Security Info=True;Trusted_Connection=True;TrustServerCertificate=Yes;");
 });
 
 builder.Services.AddAuthorization();

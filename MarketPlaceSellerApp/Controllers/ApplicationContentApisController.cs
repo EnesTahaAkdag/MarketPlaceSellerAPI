@@ -17,6 +17,7 @@ namespace MarketPlaceSellerApp.Controllers
 		{
 			_context = context;
 		}
+
 		[HttpGet("MarketPlaceData")]
 		public async Task<IActionResult> MarketPlaceData(int? page, int? pageSize)
 		{
@@ -56,11 +57,10 @@ namespace MarketPlaceSellerApp.Controllers
 				return BadRequest(new ApiResponse
 				{
 					Success = false,
-					ErrorMessage = ex.Message,
+					ErrorMessage = $"Bir hata oluştu: {ex.Message}. Lütfen sayfa ve boyut değerlerini kontrol edin."
 				});
 			}
 		}
-
 
 		[HttpGet("StoreDetails")]
 		public async Task<IActionResult> StoreDetails(long Id)
@@ -70,7 +70,7 @@ namespace MarketPlaceSellerApp.Controllers
 				return BadRequest(new StoreDetailsApiResponse
 				{
 					Success = false,
-					ErrorMessage = "Mağaza Id'si gelmediği için işlem yapılamadı"
+					ErrorMessage = "Geçersiz mağaza kimliği. Lütfen geçerli bir kimlik sağlayın."
 				});
 			}
 
@@ -95,7 +95,7 @@ namespace MarketPlaceSellerApp.Controllers
 					return NotFound(new StoreDetailsApiResponse
 					{
 						Success = false,
-						ErrorMessage = "Belirtilen mağaza bulunamadı."
+						ErrorMessage = $"Mağaza bilgisi bulunamadı. ID: {Id}"
 					});
 				}
 
@@ -108,15 +108,13 @@ namespace MarketPlaceSellerApp.Controllers
 			}
 			catch (Exception ex)
 			{
-				return BadRequest(new StoreDetailsApiResponse
+				return StatusCode(500, new StoreDetailsApiResponse
 				{
 					Success = false,
-					ErrorMessage = $"Sunucu hatası: {ex.Message}"
+					ErrorMessage = $"Bir hata oluştu: {ex.Message}. Lütfen daha sonra tekrar deneyin."
 				});
 			}
 		}
-
-
 
 		[HttpGet("ChartData")]
 		public async Task<IActionResult> ChartData()
@@ -130,7 +128,7 @@ namespace MarketPlaceSellerApp.Controllers
 					return Ok(new ApiResponses
 					{
 						Success = true,
-						ErrorMessage = null,
+						ErrorMessage = "Veri bulunmamaktadır.",
 						Data = new List<SellerRatingChartViewModel>(),
 						Count = 0,
 						TotalCount = 0
@@ -163,7 +161,7 @@ namespace MarketPlaceSellerApp.Controllers
 				var response = new ApiResponses
 				{
 					Success = false,
-					ErrorMessage = "Sunucu hatası: Lütfen daha sonra tekrar deneyin."
+					ErrorMessage = $"Sunucu hatası: {ex.Message}. Lütfen daha sonra tekrar deneyin."
 				};
 
 				Console.Error.WriteLine($"Hata: {ex.Message}");
@@ -171,6 +169,5 @@ namespace MarketPlaceSellerApp.Controllers
 				return StatusCode(500, response);
 			}
 		}
-
 	}
 }

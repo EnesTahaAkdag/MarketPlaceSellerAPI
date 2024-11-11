@@ -3,7 +3,6 @@ using MarketPlaceSellerApp.ViewModel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Newtonsoft.Json;
 
 namespace MarketPlaceSellerApp.Controllers
 {
@@ -18,12 +17,18 @@ namespace MarketPlaceSellerApp.Controllers
 		{
 			_context = context;
 		}
+
 		[HttpGet("DataSend")]
 		public async Task<IActionResult> DataSend(string userName)
 		{
 			if (string.IsNullOrEmpty(userName))
 			{
-				return BadRequest(new { Success = false, ErrorMessage = "Kullanıcı adı zorunludur. Lütfen kullanıcı adı alanını doldurunuz." });
+				return BadRequest(new
+				{
+					Success = false,
+					ErrorMessage = "Kullanıcı adı zorunludur. Lütfen kullanıcı adı alanını doldurunuz.",
+					UserGuidance = "Devam etmek için geçerli bir kullanıcı adı girin."
+				});
 			}
 
 			try
@@ -40,26 +45,33 @@ namespace MarketPlaceSellerApp.Controllers
 						u.Age,
 						ProfileImageBase64 = string.IsNullOrEmpty(u.ProfileImage)
 							? null
-							: $"https://5bec-37-130-115-91.ngrok-free.app/profile_images/{u.ProfileImage}"
+							: $"https://0686-37-130-115-91.ngrok-free.app/profile_images/{u.ProfileImage}"
 					})
 					.FirstOrDefaultAsync();
 
 				if (user == null)
 				{
-					return NotFound(new { Success = false, ErrorMessage = "Kullanıcı bulunamadı." });
+					return NotFound(new
+					{
+						Success = false,
+						ErrorMessage = "Kullanıcı bulunamadı.",
+						UserGuidance = "Lütfen kullanıcı adı doğruluğunu kontrol edin."
+					});
 				}
 
-				return Ok(new { Success = true, Data = user });
+				return Ok(new { Success = true, Data = user, Message = "Kullanıcı bilgileri başarıyla alındı." });
 			}
 			catch (Exception ex)
 			{
-				return StatusCode(500, new { Success = false, ErrorMessage = "Sunucu ile iletişimde bir sorun oluştu. Lütfen tekrar deneyin.", Details = ex.Message });
+				return StatusCode(500, new
+				{
+					Success = false,
+					ErrorMessage = "Sunucu ile iletişimde bir sorun oluştu. Lütfen tekrar deneyin.",
+					Details = ex.Message,
+					UserGuidance = "Tekrar deneyiniz veya destek ekibiyle iletişime geçin."
+				});
 			}
 		}
-
-
-
-
 
 		[HttpGet("UserList")]
 		public async Task<ActionResult> UserList(int? page, int? pageSize)
@@ -95,7 +107,7 @@ namespace MarketPlaceSellerApp.Controllers
 					Page = currentPage,
 					PageSize = pageSize.GetValueOrDefault(),
 					TotalCount = totalCount,
-					TotalPage = totalPage
+					TotalPage = totalPage,
 				});
 			}
 			catch (Exception ex)
@@ -103,7 +115,7 @@ namespace MarketPlaceSellerApp.Controllers
 				return BadRequest(new ApiResponse
 				{
 					Success = false,
-					ErrorMessage = ex.Message
+					ErrorMessage = "Kullanıcı listesi alınırken hata oluştu: " + ex.Message,
 				});
 			}
 		}

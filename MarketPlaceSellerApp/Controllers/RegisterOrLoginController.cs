@@ -33,7 +33,7 @@ namespace MarketPlaceSellerApp.Controllers
 			if (!ModelState.IsValid)
 			{
 				var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
-				return BadRequest(new { Success = false, ErrorMessage = "Geçersiz model girdisi.", Errors = errors });
+				return BadRequest(new { Success = false, ErrorMessage = "Geçersiz model girdisi. Lütfen bilgileri eksiksiz ve doğru doldurun.", Errors = errors });
 			}
 
 			var existingUser = await _context.UserData
@@ -44,8 +44,8 @@ namespace MarketPlaceSellerApp.Controllers
 			if (existingUser != null)
 			{
 				var errorMessage = existingUser.UserName == model.UserName
-					? "Kullanıcı adı zaten mevcut."
-					: "Email adresi zaten kayıtlı.";
+					? "Bu kullanıcı adı zaten kullanılmaktadır."
+					: "Bu e-posta adresi ile zaten bir hesap bulunmaktadır.";
 				return BadRequest(new { Success = false, ErrorMessage = errorMessage });
 			}
 
@@ -66,10 +66,6 @@ namespace MarketPlaceSellerApp.Controllers
 						return BadRequest(new { Success = false, ErrorMessage = $"Profil resmi kaydedilemedi: {ex.Message}" });
 					}
 				}
-				else
-				{
-					profileImagePath = null;
-				}
 
 				var user = new UserDatum
 				{
@@ -84,7 +80,7 @@ namespace MarketPlaceSellerApp.Controllers
 				await _context.AddAsync(user);
 				await _context.SaveChangesAsync();
 
-				return Ok(new { Success = true, Message = "Kullanıcı başarıyla kaydedildi." });
+				return Ok(new { Success = true, Message = "Kayıt başarılı! Hesabınız oluşturuldu." });
 			}
 			catch (Exception ex)
 			{
@@ -106,7 +102,7 @@ namespace MarketPlaceSellerApp.Controllers
 		{
 			if (model == null || string.IsNullOrWhiteSpace(model.UserName) || string.IsNullOrWhiteSpace(model.Password))
 			{
-				return BadRequest(new { Success = false, ErrorMessage = "Kullanıcı adı ve parola boş olamaz." });
+				return BadRequest(new { Success = false, ErrorMessage = "Kullanıcı adı ve parola alanları boş bırakılamaz." });
 			}
 
 			try
@@ -141,7 +137,7 @@ namespace MarketPlaceSellerApp.Controllers
 
 				await SendEmailValidationCode(existingUser.Email, randomCode);
 
-				return Ok(new { Success = true, Message = "Doğrulama kodu gönderildi." });
+				return Ok(new { Success = true, Message = "Doğrulama kodu başarıyla gönderildi. Lütfen e-posta adresinizi kontrol edin." });
 			}
 			catch (Exception ex)
 			{
@@ -198,10 +194,8 @@ namespace MarketPlaceSellerApp.Controllers
 			if (!user.ValidationCode.Equals(model.ValidationCode))
 				return BadRequest(new { Success = false, ErrorMessage = "Doğrulama kodu yanlış." });
 
-			return Ok(new { Success = true, Message = "Doğrulama başarılı." });
+			return Ok(new { Success = true, Message = "Doğrulama başarılı!" });
 		}
-
-
 
 		[HttpPost("ChangePassword")]
 		public async Task<IActionResult> ChangePassword([FromBody] ChancePasswordModel model)

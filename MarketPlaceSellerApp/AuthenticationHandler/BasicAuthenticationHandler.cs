@@ -13,21 +13,25 @@ namespace MarketPlaceSellerApp.AuthenticationHandler
 	public class BasicAuthenticationHandler : AuthenticationHandler<AuthenticationSchemeOptions>
 	{
 		private readonly AuthHelpers _authHelpers;
+		private readonly ILogger<BasicAuthenticationHandler> _logger;
+
 		public BasicAuthenticationHandler(
-		IOptionsMonitor<AuthenticationSchemeOptions> options,
-		ILoggerFactory logger,
-		UrlEncoder encoder,
-		ISystemClock clock,
-		AuthHelpers authHelpers) : base(options, logger, encoder, clock)
+			IOptionsMonitor<AuthenticationSchemeOptions> options,
+			ILoggerFactory loggerFactory,
+			UrlEncoder encoder,
+			ISystemClock clock,
+			AuthHelpers authHelpers) : base(options, loggerFactory, encoder, clock)
 		{
 			_authHelpers = authHelpers;
+			_logger = loggerFactory.CreateLogger<BasicAuthenticationHandler>();
 		}
 
 		protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
 		{
 			if (!Request.Headers.ContainsKey("Authorization"))
 			{
-				return AuthenticateResult.Fail("Missing Authorization Header");
+				_logger.LogWarning("Authorization header is missing");
+				return AuthenticateResult.Fail("Authorization header is missing. Please provide valid credentials.");
 			}
 
 			try
@@ -38,34 +42,37 @@ namespace MarketPlaceSellerApp.AuthenticationHandler
 				var userName = credentials[0];
 				var password = credentials[1];
 
-				if (!string.IsNullOrEmpty(userName) && !string.IsNullOrEmpty(password))
+				if (string.IsNullOrEmpty(userName) || string.IsNullOrEmpty(password))
 				{
-					var loginUser = new LoginUser { UserName = userName, Password = password };
-					var result = await _authHelpers.UserAuthentication(loginUser);
-					if (result is OkObjectResult)
-					{
-						var claims = new[] {
-						new Claim(ClaimTypes.NameIdentifier,userName),
-						new Claim(ClaimTypes.Name,userName),
-						};
-						var identity = new ClaimsIdentity(claims, Scheme.Name);
-						var principal = new ClaimsPrincipal(identity);
-						var ticket = new AuthenticationTicket(principal, Scheme.Name);
-						return AuthenticateResult.Success(ticket);
-					}
-					else
-					{
-						return AuthenticateResult.Fail("Kullanıcı Adı Veya Parola Yanlış");
-					}
+					_logger.LogWarning("Empty username or password received");
+					return AuthenticateResult.Fail("Username or password cannot be empty.");
+				}
+
+				var loginUser = new LoginUser { UserName = userName, Password = password };
+				var result = await _authHelpers.UserAuthentication(loginUser);
+
+				if (result is OkObjectResult)
+				{
+					_logger.LogInformation($"User '{userName}' authenticated successfully");
+					var claims = new[] {
+						new Claim(ClaimTypes.NameIdentifier, userName),
+						new Claim(ClaimTypes.Name, userName),
+					};
+					var identity = new ClaimsIdentity(claims, Scheme.Name);
+					var principal = new ClaimsPrincipal(identity);
+					var ticket = new AuthenticationTicket(principal, Scheme.Name);
+					return AuthenticateResult.Success(ticket);
 				}
 				else
 				{
-					return AuthenticateResult.Fail("Geçersiz Kullanıcı Adı Veya Parola");
+					_logger.LogWarning($"Invalid credentials for user '{userName}'");
+					return AuthenticateResult.Fail("Invalid username or password. Please try again.");
 				}
 			}
-			catch
+			catch (Exception ex)
 			{
-				return AuthenticateResult.Fail("Geçersiz Yetkilendirme");
+				_logger.LogError(ex, "Error occurred during authentication");
+				return AuthenticateResult.Fail("An error occurred during authentication. Please contact support.");
 			}
 		}
 	}
