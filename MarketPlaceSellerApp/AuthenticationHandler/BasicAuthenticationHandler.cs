@@ -19,8 +19,7 @@ namespace MarketPlaceSellerApp.AuthenticationHandler
 			IOptionsMonitor<AuthenticationSchemeOptions> options,
 			ILoggerFactory loggerFactory,
 			UrlEncoder encoder,
-			ISystemClock clock,
-			AuthHelpers authHelpers) : base(options, loggerFactory, encoder, clock)
+			AuthHelpers authHelpers) : base(options, loggerFactory, encoder)
 		{
 			_authHelpers = authHelpers;
 			_logger = loggerFactory.CreateLogger<BasicAuthenticationHandler>();

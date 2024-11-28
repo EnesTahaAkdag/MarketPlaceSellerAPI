@@ -43,7 +43,6 @@ builder.Services.AddSwaggerGen(c =>
 builder.Services.AddTransient<AuthHelpers>();
 builder.Services.AddSingleton<GuidOperation>();
 
-builder.Services.AddSingleton<ISystemClock, SystemClock>();
 
 builder.Services.AddAuthentication("BasicAuthentication")
 	.AddScheme<AuthenticationSchemeOptions, BasicAuthenticationHandler>("BasicAuthentication", null);
@@ -62,7 +61,7 @@ if (app.Environment.IsDevelopment())
 	app.UseSwagger();
 	app.UseSwaggerUI(c =>
 	{
-		c.SwaggerEndpoint("/swagger/v1/swagger.json","MobilApp.Api V1");
+		c.SwaggerEndpoint("/swagger/v1/swagger.json", "MobilApp.Api V1");
 		c.DocExpansion(Swashbuckle.AspNetCore.SwaggerUI.DocExpansion.None);
 	});
 }
