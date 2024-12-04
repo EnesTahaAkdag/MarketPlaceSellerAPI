@@ -36,7 +36,7 @@ namespace MarketPlaceSellerApp.HepsiBuradaController
 					var sqlQuery = @"DELETE FROM [Hepsiburada-Seller-Information].[dbo].[Seller_Information]
                              WHERE [Link] = @Link";
 
-					var rowsAffected = await connection.ExecuteAsync(sqlQuery, new { Link = model.Link });
+					var rowsAffected = await connection.ExecuteAsync(sqlQuery, new { model.Link });
 
 					if (rowsAffected > 0)
 						return Ok(new { success = true, message = "Mağaza başarıyla silindi." });
@@ -57,19 +57,18 @@ namespace MarketPlaceSellerApp.HepsiBuradaController
 		{
 
 			var sqlQuery = @"  
-        SELECT TOP 1 [Link]
-        FROM [Hepsiburada-Seller-Information].[dbo].[Seller_Information]
-        WHERE Telephone IS NOT NULL
-          AND StoreScore IS NOT NULL
-          AND NumberOfProducts IS NOT NULL
-          AND (
-            TRY_CAST(NumberOfProducts AS int) >= 20
-            OR NumberOfProducts IN ('1B', '2B', '3B', '4B', '5B', '6B', '7B', '8B', '9B', 
-                                    '10B', '11B', '12B', '13B', '14B', '15B', '16B', '17B', '18B', '19B', '20B')
-          )
-          AND SellerName IS NOT NULL
-          AND LEFT(Telephone, 1) = '0'
-        ORDER BY NEWID()";
+SELECT TOP 1 [Link]
+FROM [Hepsiburada-Seller-Information].[dbo].[Seller_Information]
+WHERE Telephone IS NOT NULL
+AND StoreScore IS NOT NULL
+AND NumberOfProducts IS NOT NULL
+AND (
+TRY_CAST(NumberOfProducts AS int) >= 20
+OR NumberOfProducts IN ('1B', '2B', '3B', '4B', '5B', '6B', '7B', '8B', '9B', 
+'10B', '11B', '12B', '13B', '14B', '15B', '16B', '17B', '18B', '19B', '20B'))
+AND SellerName IS NOT NULL
+AND LEFT(Telephone, 1) = '0'
+ORDER BY NEWID()";
 
 			try
 			{
@@ -109,53 +108,66 @@ namespace MarketPlaceSellerApp.HepsiBuradaController
 		[HttpPost("GetRandomUrl")]
 		public async Task<JsonResult> GetRandomUrl()
 		{
-			const string sqlQuery = @"
+			string sqlQuery = @"
 SELECT TOP 1 [Link]
-FROM [Hepsiburada-Seller-Information].[dbo].[Seller-Information]
+FROM [Hepsiburada-Seller-Information].[dbo].[Seller_Information]
 WHERE
-([SellerName]IS NULL Or [SellerName]='')
-AND [Category] IS NOT NULL
-AND TRY_CAST([NumberOfProducts]AS int)>20
+([SellerName] IS NULL OR [SellerName] = '')
+AND [Category] IS NOT NULL   
+AND TRY_CAST([NumberOfProducts] AS int) > 20
 ORDER BY NEWID();";
 
 			try
 			{
 				using (var connection = new SqlConnection(_connectionString))
 				{
-					connection.Open();
+					await connection.OpenAsync();
 
 					var randomUrl = await connection.QuerySingleOrDefaultAsync<string>(sqlQuery);
+
+					if (string.IsNullOrEmpty(randomUrl))
+					{
+						return Json(new { success = false, message = "Rastgele URL Bulunamadı" });
+					}
 
 					return Json(new
 					{
 						success = !string.IsNullOrEmpty(randomUrl),
-						url = randomUrl ?? "Rastgele URL Bulunamadı"
+						url = randomUrl ?? "Uygun URL bulunamadı."
 					});
 				}
 			}
 			catch (Exception ex)
 			{
-				_logger.LogError(ex, "Rastgele Url Getirilirken bir hata oluştu.");
+				_logger.LogError(ex, "Rastgele URL getirilirken bir hata oluştu.");
 
 				return Json(new
 				{
 					success = false,
-					message = "Bir hata oluştu.",
+					message = "Beklenmeyen bir hata oluştu.",
 					error = ex.Message
 				});
 			}
 		}
 
-
-
 		[HttpPost("UpData")]
 		public async Task<JsonResult> UpData([FromBody] SellerInfoPIFModel model)
 		{
-			if (!ModelState.IsValid) return Json(new { success = false, message = "Geçersiz veri." });
+			if (!ModelState.IsValid)
+				return Json(new { success = false, message = "Geçersiz veri." });
 
+			// Veritabanında mağaza adı ile kontrol
 			var dataControl = await _context.SellerInformations.FirstOrDefaultAsync(m => m.StoreName == model.StoreName);
-			if (dataControl == null) return Json(new { success = false, message = "Böyle bir mağaza yok." });
+			if (dataControl == null)
+				return Json(new { success = false, message = "Böyle bir mağaza yok." });
 
+			// Aynı "SellerName" veritabanında zaten mevcutsa işlem yapılmaz
+			var existingSeller = await _context.SellerInformations
+				.FirstOrDefaultAsync(m => m.SellerName == model.SellerName);
+			if (existingSeller != null)
+				return Json(new { success = false, message = "Bu 'SellerName' başka bir mağaza tarafından kullanılıyor." });
+
+			// Verileri düzenle ve kontrol et
 			if (!string.IsNullOrWhiteSpace(model.SellerName) && model.SellerName.StartsWith("Ünvanı:"))
 				dataControl.SellerName = model.SellerName.Replace("Ünvanı:", "").Trim();
 			else if (string.IsNullOrWhiteSpace(model.SellerName))
@@ -177,14 +189,19 @@ ORDER BY NEWID();";
 			}
 
 			if (!string.IsNullOrWhiteSpace(model.Mersis) && model.Mersis.StartsWith("Mersis Numarası:"))
+			{
 				dataControl.Mersis = model.Mersis.Replace("Mersis Numarası:", "").Trim();
+			}
 			else if (string.IsNullOrWhiteSpace(model.Mersis))
+			{
 				dataControl.Mersis = null;
+			}
 
 			dataControl.Telephone = string.IsNullOrWhiteSpace(model.Telephone) ? null : model.Telephone;
 
 			try
 			{
+				// Veritabanında değişiklikleri kaydet
 				await _context.SaveChangesAsync();
 				return Json(new { success = true, message = "Veri başarıyla güncellendi." });
 			}
@@ -195,18 +212,48 @@ ORDER BY NEWID();";
 			}
 		}
 
-
-
 		[HttpPost("GetRandomUrls")]
 		public async Task<JsonResult> GetRandomUrls()
 		{
-			var randomUrl = await _context.SellerInformations
-				.Where(r => string.IsNullOrEmpty(r.Category) || r.Category == "-" || string.IsNullOrEmpty(r.Email) || r.Email == "-")
-				.OrderBy(r => Guid.NewGuid())
-				.Select(r => r.Link)
-				.FirstOrDefaultAsync();
+			string sqlQuery = @"
+SELECT TOP 1 [Link] 
+FROM [Hepsiburada-Seller-Information].[dbo].[Seller_Information]
+WHERE ([Category] IS NULL AND [Email] IS NULL) ORDER BY NEWID();";
 
-			return Json(new { success = !string.IsNullOrEmpty(randomUrl), url = randomUrl ?? "Rastgele URL Bulunamadı." });
+			try
+			{
+				using (var connection = new SqlConnection(_connectionString))
+				{
+					await connection.OpenAsync();
+
+					var randomURL = await connection.QuerySingleOrDefaultAsync<string>(sqlQuery);
+
+					if (string.IsNullOrEmpty(randomURL))
+					{
+						return Json(new
+						{
+							success = false,
+							message = "Rastgele URL Bulunamadı"
+						});
+					}
+					return Json(new
+					{
+						success = true,
+						message = randomURL ?? "Uygun Url Bulunamadı"
+					});
+				}
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "Rastgele Url Getirilirken bir Hata Oluştu");
+
+				return Json(new
+				{
+					success = false,
+					message = "Beklenmeyen bir hata meydana geldi",
+					error = ex.Message
+				});
+			}
 		}
 
 		[HttpPost("UpdateCategory")]
