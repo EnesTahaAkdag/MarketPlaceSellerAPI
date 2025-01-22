@@ -98,13 +98,6 @@ ORDER BY NEWID()";
 			}
 		}
 
-		[HttpGet("Index")]
-		public async Task<IActionResult> Index()
-		{
-			var datalist = await _context.SellerInformations.AsNoTracking().ToListAsync();
-			return View(datalist);
-		}
-
 		[HttpPost("GetRandomUrl")]
 		public async Task<JsonResult> GetRandomUrl()
 		{
@@ -190,7 +183,8 @@ ORDER BY NEWID();";
 
 			if (!string.IsNullOrWhiteSpace(model.Mersis) && model.Mersis.StartsWith("Mersis Numarası:"))
 			{
-				dataControl.Mersis = model.Mersis.Replace("Mersis Numarası:", "").Trim();
+				var mersisValue = model.Mersis.Replace("Mersis Numarası:", "").Trim();
+				dataControl.Mersis = string.IsNullOrEmpty(mersisValue) ? null : mersisValue;
 			}
 			else if (string.IsNullOrWhiteSpace(model.Mersis))
 			{

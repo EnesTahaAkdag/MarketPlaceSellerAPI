@@ -3,10 +3,11 @@ using MarketPlaceSellerApp.ViewModel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Linq;
 
 namespace MarketPlaceSellerApp.Controllers
 {
-	[Authorize]
+	//[Authorize]
 	[Route("[controller]")]
 	[ApiController]
 	public class ApplicationContentApiController : ControllerBase
@@ -23,71 +24,75 @@ namespace MarketPlaceSellerApp.Controllers
 		{
 			try
 			{
-				int totalCount = _context.SellerInformations.Count();
-				int currentPage = page ?? 1;
-				pageSize = pageSize ?? 50;
-				int totalPage = (int)Math.Ceiling((decimal)totalCount / pageSize.GetValueOrDefault());
+				page = Math.Max(page ?? 1, 1);
+				pageSize = Math.Clamp(pageSize ?? 50, 1, 100);
 
-				var data = await (from c in _context.SellerInformations
-								  orderby c.Id
-								  select new HbInformationAppDataViewModel
-								  {
-									  Id = c.Id,
-									  StoreName = c.StoreName,
-									  Telephone = c.Telephone,
-								  })
-								  .Skip((currentPage - 1) * pageSize.GetValueOrDefault())
-								  .Take(pageSize.GetValueOrDefault())
-								  .AsNoTracking()
-								  .ToListAsync();
+				var query = _context.SellerInformations
+					.AsNoTracking()
+					.OrderBy(c => c.Id);
+
+				var totalCount = await query.CountAsync();
+				var totalPage = (int)Math.Ceiling(totalCount / (double)pageSize.Value);
+
+				var data = await query
+					.Skip((page.Value - 1) * pageSize.Value)
+					.Take(pageSize.Value)
+					.Select(c => new HbInformationAppDataViewModel
+					{
+						Id = c.Id,
+						StoreName = c.StoreName,
+						Telephone = c.Telephone,
+					})
+					.ToListAsync();
 
 				return Ok(new ApiResponse
 				{
 					Success = true,
 					ErrorMessage = null,
 					Data = data,
-					Page = currentPage,
-					PageSize = pageSize.GetValueOrDefault(),
+					Page = page.Value,
+					PageSize = pageSize.Value,
 					TotalCount = totalCount,
 					TotalPage = totalPage
 				});
 			}
 			catch (Exception ex)
 			{
-				return BadRequest(new ApiResponse
+				return StatusCode(500, new ApiResponse
 				{
 					Success = false,
-					ErrorMessage = $"Bir hata oluştu: {ex.Message}. Lütfen sayfa ve boyut değerlerini kontrol edin."
+					ErrorMessage = $"Sunucu hatası: {ex.Message}"
 				});
 			}
 		}
 
 		[HttpGet("StoreDetails")]
-		public async Task<IActionResult> StoreDetails(long Id)
+		public async Task<IActionResult> StoreDetails(long id)
 		{
-			if (Id == 0)
+			if (id <= 0)
 			{
 				return BadRequest(new StoreDetailsApiResponse
 				{
 					Success = false,
-					ErrorMessage = "Geçersiz mağaza kimliği. Lütfen geçerli bir kimlik sağlayın."
+					ErrorMessage = "Geçersiz mağaza kimliği."
 				});
 			}
 
 			try
 			{
-				var storeDetails = await (from c in _context.SellerInformations
-										  where c.Id == Id
-										  select new StoreDetailsViewModel
-										  {
-											  Id = c.Id,
-											  StoreName = c.StoreName,
-											  SellerName = c.SellerName,
-											  Telephone = c.Telephone,
-											  Email = c.Email,
-											  Address = c.Address,
-											  Link = c.Link
-										  })
+				var storeDetails = await _context.SellerInformations
+					.AsNoTracking()
+					.Where(c => c.Id == id)
+					.Select(c => new StoreDetailsViewModel
+					{
+						Id = c.Id,
+						StoreName = c.StoreName ?? string.Empty,
+						SellerName = c.SellerName ?? string.Empty,
+						Telephone = c.Telephone ?? string.Empty,
+						Email = c.Email ?? string.Empty,
+						Address = c.Address ?? string.Empty,
+						Link = c.Link ?? string.Empty
+					})
 					.FirstOrDefaultAsync();
 
 				if (storeDetails == null)
@@ -95,14 +100,13 @@ namespace MarketPlaceSellerApp.Controllers
 					return NotFound(new StoreDetailsApiResponse
 					{
 						Success = false,
-						ErrorMessage = $"Mağaza bilgisi bulunamadı. ID: {Id}"
+						ErrorMessage = $"Mağaza bulunamadı. ID: {id}"
 					});
 				}
 
 				return Ok(new StoreDetailsApiResponse
 				{
 					Success = true,
-					ErrorMessage = null,
 					Data = storeDetails
 				});
 			}
@@ -111,7 +115,7 @@ namespace MarketPlaceSellerApp.Controllers
 				return StatusCode(500, new StoreDetailsApiResponse
 				{
 					Success = false,
-					ErrorMessage = $"Bir hata oluştu: {ex.Message}. Lütfen daha sonra tekrar deneyin."
+					ErrorMessage = $"Sunucu hatası: {ex.Message}"
 				});
 			}
 		}
@@ -121,9 +125,18 @@ namespace MarketPlaceSellerApp.Controllers
 		{
 			try
 			{
-				int totalCount = await _context.SellerInformations.CountAsync();
+				var allData = await _context.SellerInformations
+					.Select(s => new { s.RatingScore })
+					.ToListAsync();
 
-				if (totalCount == 0)
+				var ratings = allData
+					.Where(s => s.RatingScore.HasValue)
+					.Select(s => s.RatingScore.Value)
+					.ToList();
+
+				var nullCount = allData.Count(s => !s.RatingScore.HasValue);
+
+				if (!ratings.Any() && nullCount == 0)
 				{
 					return Ok(new ApiResponses
 					{
@@ -131,42 +144,38 @@ namespace MarketPlaceSellerApp.Controllers
 						ErrorMessage = "Veri bulunmamaktadır.",
 						Data = new List<SellerRatingChartViewModel>(),
 						Count = 0,
-						TotalCount = 0
+						TotalCount = 0,
+						NullValueCount = 0
 					});
 				}
 
-				var data = await _context.SellerInformations
-					.OrderBy(c => c.Id)
-					.Select(c => new SellerRatingChartViewModel
+				var ratingPoints = Enumerable.Range(1, 5)
+					.Select(rating => new SellerRatingChartViewModel
 					{
-						StoreName = c.StoreName,
-						RatingScore = c.RatingScore
+						RatingScore = rating,
+						Count = ratings.Count(r => Math.Floor(r) == rating)
 					})
-					.AsNoTracking()
-					.ToListAsync();
+					.Where(r => r.Count > 0)
+					.OrderBy(r => r.RatingScore)
+					.ToList();
 
-				var response = new ApiResponses
+				return Ok(new ApiResponses
 				{
 					Success = true,
 					ErrorMessage = null,
-					Data = data,
-					Count = data.Count,
-					TotalCount = totalCount
-				};
-
-				return Ok(response);
+					Data = ratingPoints,
+					Count = ratingPoints.Count,
+					TotalCount = allData.Count,
+					NullValueCount = nullCount
+				});
 			}
 			catch (Exception ex)
 			{
-				var response = new ApiResponses
+				return StatusCode(500, new ApiResponses
 				{
 					Success = false,
-					ErrorMessage = $"Sunucu hatası: {ex.Message}. Lütfen daha sonra tekrar deneyin."
-				};
-
-				Console.Error.WriteLine($"Hata: {ex.Message}");
-
-				return StatusCode(500, response);
+					ErrorMessage = $"Sunucu hatası: {ex.Message}"
+				});
 			}
 		}
 	}
