@@ -21,8 +21,6 @@ namespace MarketPlaceSellerApp.ViewModel
 		[EmailAddress(ErrorMessage = "Geçerli bir email adresi giriniz.")]
 		public string Email { get; set; }
 
-		public string Age { get; set; }
-
 		[DataType(DataType.Password)]
 		[Required(ErrorMessage = "Lütfen şifre giriniz.")]
 		[RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d])[A-Za-z\d\S]{8,}$",
@@ -67,10 +65,7 @@ namespace MarketPlaceSellerApp.ViewModel
         [EmailAddress(ErrorMessage = "Geçerli bir email adresi giriniz.")]
         public string Email { get; set; }
 
-        public DateTime? Age { get; set; }
-
         public string ProfileImageBase64 { get; set; }
-
 	}
 
     public class UpdatePassword

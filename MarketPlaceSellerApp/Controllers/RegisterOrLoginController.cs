@@ -75,7 +75,6 @@ namespace MarketPlaceSellerApp.Controllers
 					Email = model.Email,
 					Password = hashPassword,
 					ProfileImage = profileImagePath,
-					Age = !string.IsNullOrWhiteSpace(model.Age) ? Convert.ToDateTime(model.Age) : (DateTime?)null
 				};
 				await _context.AddAsync(user);
 				await _context.SaveChangesAsync();

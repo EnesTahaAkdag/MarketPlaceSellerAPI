@@ -25,6 +25,8 @@ public partial class HepsiburadaSellerInformationContext : DbContext
 
             entity.ToTable("Seller_Information");
 
+            entity.HasIndex(e => e.StoreName, "Store_Name").IsUnique();
+
             entity.Property(e => e.Id).HasColumnName("ID");
             entity.Property(e => e.Address).HasMaxLength(500);
             entity.Property(e => e.AverageDeliveryTime)
@@ -64,7 +66,6 @@ public partial class HepsiburadaSellerInformationContext : DbContext
         {
             entity.HasKey(e => e.Id).HasName("PK_UserDat");
 
-            entity.Property(e => e.Age).HasColumnType("date");
             entity.Property(e => e.Email).HasMaxLength(256);
             entity.Property(e => e.FirstName).HasMaxLength(50);
             entity.Property(e => e.LastName).HasMaxLength(50);

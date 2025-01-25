@@ -97,7 +97,6 @@ namespace MarketPlaceSellerApp.Controllers
 					user.FirstName = model.FirstName;
 					user.LastName = model.LastName;
 					user.Email = model.Email;
-					user.Age = model.Age;
 
 					if (!string.IsNullOrWhiteSpace(model.ProfileImageBase64) && !model.ProfileImageBase64.StartsWith("http", StringComparison.OrdinalIgnoreCase))
 					{
@@ -115,7 +114,6 @@ namespace MarketPlaceSellerApp.Controllers
 							LastName = u.LastName,
 							UserName = u.UserName,
 							Email = u.Email,
-							Age = u.Age.Value,
 							ProfileImageBase64 = string.IsNullOrEmpty(u.ProfileImage)
 								? null
 								: $"https://d255-37-130-115-91.ngrok-free.app/profile_images/{u.ProfileImage}"

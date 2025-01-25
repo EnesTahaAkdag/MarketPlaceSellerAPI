@@ -17,8 +17,6 @@ public partial class UserDatum
 
     public string LastName { get; set; }
 
-    public DateTime? Age { get; set; }
-
     public string Password { get; set; }
 
     public string ProfileImage { get; set; }

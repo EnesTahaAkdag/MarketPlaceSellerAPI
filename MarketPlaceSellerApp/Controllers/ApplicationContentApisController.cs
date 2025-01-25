@@ -125,14 +125,9 @@ namespace MarketPlaceSellerApp.Controllers
 		{
 			try
 			{
-				var allData = await _context.SellerInformations
-					.Select(s => new { s.RatingScore })
-					.ToListAsync();
+				var allData = await _context.SellerInformations.Select(s => new { s.RatingScore }).ToListAsync();
 
-				var ratings = allData
-					.Where(s => s.RatingScore.HasValue)
-					.Select(s => s.RatingScore.Value)
-					.ToList();
+				var ratings = allData.Where(s => s.RatingScore.HasValue).Select(s => s.RatingScore.Value).ToList();
 
 				var nullCount = allData.Count(s => !s.RatingScore.HasValue);
 
@@ -144,7 +139,6 @@ namespace MarketPlaceSellerApp.Controllers
 						ErrorMessage = "Veri bulunmamaktadır.",
 						Data = new List<SellerRatingChartViewModel>(),
 						Count = 0,
-						TotalCount = 0,
 						NullValueCount = 0
 					});
 				}
@@ -165,7 +159,6 @@ namespace MarketPlaceSellerApp.Controllers
 					ErrorMessage = null,
 					Data = ratingPoints,
 					Count = ratingPoints.Count,
-					TotalCount = allData.Count,
 					NullValueCount = nullCount
 				});
 			}

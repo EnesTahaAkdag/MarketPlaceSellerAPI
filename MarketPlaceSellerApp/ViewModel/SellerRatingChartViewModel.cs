@@ -13,7 +13,6 @@ namespace MarketPlaceSellerApp.ViewModel
         public string ErrorMessage { get; set; }
         public List<SellerRatingChartViewModel> Data { get; set; }
         public int Count { get; set; }
-        public int TotalCount { get; set; }
         public int NullValueCount { get; set; }
     }
 } 
